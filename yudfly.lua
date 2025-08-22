@@ -60,7 +60,7 @@ end
 
 -- ===== GUI BUILD =====
 local gui = Instance.new("ScreenGui")
-gui.Name = "FlyMobileUI"
+gui.Name = "FLY Jebek V2"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
