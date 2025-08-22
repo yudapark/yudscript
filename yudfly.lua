@@ -405,7 +405,7 @@ UIS.JumpRequest:Connect(function()
     end
 end)
 
--- Fly Handler (PC + Mobile Sync Kamera)
+-- Fly Handler (PC + Mobile)
 RunService.Heartbeat:Connect(function()
     if FLY_ENABLED and rootPart and humanoid and bodyVelocity then
         local camCF = workspace.CurrentCamera.CFrame
@@ -414,7 +414,7 @@ RunService.Heartbeat:Connect(function()
 
         local moveDir = Vector3.zero
 
-        -- 📌 MODE PC: WASD
+        -- 📌 PC Mode
         if UIS.KeyboardEnabled then
             if UIS:IsKeyDown(Enum.KeyCode.W) then
                 moveDir += look
@@ -429,19 +429,28 @@ RunService.Heartbeat:Connect(function()
                 moveDir += right
             end
             if UIS:IsKeyDown(Enum.KeyCode.Space) then
-                moveDir += Vector3.new(0, 1, 0)
+                moveDir += Vector3.new(0, 1, 0) -- naik
             end
             if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
-                moveDir -= Vector3.new(0, 1, 0)
+                moveDir -= Vector3.new(0, 1, 0) -- turun
             end
         end
 
-        -- 📌 MODE MOBILE: Analog
+        -- 📌 Mobile Mode
         if UIS.TouchEnabled then
             local move = humanoid.MoveDirection
             if move.Magnitude > 0 then
-                -- analog diproyeksikan ke arah kamera
+                -- analog + kamera → gerakan
                 moveDir += (look * move.Z + right * move.X)
+            end
+
+            -- kunci kamera di depan (first-person-like saat fly)
+            workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
+            workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, rootPart.Position + look)
+        else
+            -- reset kamera kalau bukan mobile
+            if workspace.CurrentCamera.CameraType ~= Enum.CameraType.Custom then
+                workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
             end
         end
 
@@ -452,11 +461,13 @@ RunService.Heartbeat:Connect(function()
             bodyVelocity.Velocity = Vector3.zero
             rootPart.AssemblyLinearVelocity = Vector3.zero
         end
+    else
+        -- kalau fly mati, pastikan kamera balik normal
+        if workspace.CurrentCamera.CameraType ~= Enum.CameraType.Custom then
+            workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+        end
     end
 end)
-
-
-
 
 -- NoClip
 RunService.Stepped:Connect(function()
