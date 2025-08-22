@@ -1,201 +1,173 @@
--- LocalScript di StarterGui
--- Fly GUI: Full fitur + animasi normal + noclip + immortal + first person precision
+-- YUDA FLY HUB
+-- All-in-One Fly, Noclip, Speed, Jump, Teleport
+-- Keybinds: B=NoClip, F=Fly, G=Speed, H=InfJump, J=JumpHeight, Arrows=Teleport
 
-local player = game.Players.LocalPlayer
+local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
 
-local flying = false
-local flySpeed = 50
+-- Flags
+local NOCLIP_ENABLED = false
+local FLY_ENABLED = false
+local SPEED_ENABLED = false
+local INFJUMP_ENABLED = false
+local JUMPBOOST_ENABLED = false
+
+-- Settings
+local FLY_SPEED = 50
+local SPEED_MULTIPLIER = 8
+local JUMP_POWER = 100
+local TELEPORT_DIST = 15
+
 local bodyVelocity
-local currentMultiplier = 1
-local humanoidRootPart
-local humanoid
+local humanoid, rootPart
 
--- Fungsi ambil root & humanoid tiap respawn
+-- Utility: Setup Char
 local function setupChar()
 	local char = player.Character or player.CharacterAdded:Wait()
-	humanoidRootPart = char:WaitForChild("HumanoidRootPart")
 	humanoid = char:WaitForChild("Humanoid")
+	rootPart = char:WaitForChild("HumanoidRootPart")
 end
-
 setupChar()
-player.CharacterAdded:Connect(function()
-	setupChar()
-	if flying then
-		bodyVelocity = Instance.new("BodyVelocity")
-		bodyVelocity.Velocity = Vector3.new(0,0,0)
-		bodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
-		bodyVelocity.Parent = humanoidRootPart
-	end
-end)
+player.CharacterAdded:Connect(setupChar)
 
 -- GUI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "FlyGUI"
+local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+screenGui.Name = "YudaHub"
 screenGui.ResetOnSpawn = false
-screenGui.Parent = player:WaitForChild("PlayerGui")
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 200, 0, 140)
-mainFrame.Position = UDim2.new(0.05, 0, 0.5, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0, 220, 0, 170)
+mainFrame.Position = UDim2.new(0.05, 0, 0.4, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
 mainFrame.Draggable = true
-mainFrame.Parent = screenGui
 
--- Fly Button
-local flyButton = Instance.new("TextButton")
-flyButton.Size = UDim2.new(0, 180, 0, 40)
-flyButton.Position = UDim2.new(0, 10, 0, 10)
-flyButton.Text = "Fly: OFF"
-flyButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-flyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-flyButton.Parent = mainFrame
+local UIStroke = Instance.new("UIStroke", mainFrame)
+UIStroke.Color = Color3.fromRGB(0, 200, 255)
+UIStroke.Thickness = 2
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
--- Speed Dropdown
-local speedDropdown = Instance.new("TextButton")
-speedDropdown.Size = UDim2.new(0, 180, 0, 30)
-speedDropdown.Position = UDim2.new(0, 10, 0, 55)
-speedDropdown.Text = "Speed: x1"
-speedDropdown.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-speedDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedDropdown.Parent = mainFrame
+local title = Instance.new("TextLabel", mainFrame)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "🔥 YUDA HUB 🔥"
+title.TextColor3 = Color3.fromRGB(0, 200, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.BackgroundTransparency = 1
 
-local multipliers = {1,2,3,4,5,6,7}
-local currentIndex = 1
-speedDropdown.MouseButton1Click:Connect(function()
-	currentIndex = currentIndex % #multipliers + 1
-	currentMultiplier = multipliers[currentIndex]
-	speedDropdown.Text = "Speed: x"..currentMultiplier
-end)
+local statusBox = Instance.new("TextLabel", mainFrame)
+statusBox.Size = UDim2.new(1, -10, 1, -40)
+statusBox.Position = UDim2.new(0, 5, 0, 35)
+statusBox.BackgroundTransparency = 1
+statusBox.TextXAlignment = Enum.TextXAlignment.Left
+statusBox.TextYAlignment = Enum.TextYAlignment.Top
+statusBox.Font = Enum.Font.Code
+statusBox.TextSize = 14
+statusBox.TextColor3 = Color3.fromRGB(255,255,255)
+statusBox.Text = ""
 
--- Minimize Button
-local minimizeButton = Instance.new("TextButton")
-minimizeButton.Size = UDim2.new(0, 60, 0, 25)
-minimizeButton.Position = UDim2.new(1, -95, 0, 5)
-minimizeButton.Text = "-"
-minimizeButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-minimizeButton.Parent = mainFrame
+local function updateStatus()
+	statusBox.Text = string.format(
+		"F (Fly): %s\nB (NoClip): %s\nG (Speed): %s\nH (Inf Jump): %s\nJ (JumpBoost): %s\n↑↓ (Teleport)\n\nFly Speed: %d\nSpeed x%d\nJump Height: %d",
+		FLY_ENABLED and "ON" or "OFF",
+		NOCLIP_ENABLED and "ON" or "OFF",
+		SPEED_ENABLED and "ON" or "OFF",
+		INFJUMP_ENABLED and "ON" or "OFF",
+		JUMPBOOST_ENABLED and "ON" or "OFF",
+		FLY_SPEED,
+		SPEED_MULTIPLIER,
+		JUMP_POWER
+	)
+end
+updateStatus()
 
-local minimized = false
-minimizeButton.MouseButton1Click:Connect(function()
-	minimized = not minimized
-	for _, child in pairs(mainFrame:GetChildren()) do
-		if child ~= minimizeButton and child ~= closeButton then
-			child.Visible = not minimized
-		end
-	end
-	minimizeButton.Text = minimized and "+" or "-"
-end)
-
--- Close Button
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 25, 0, 25)
-closeButton.Position = UDim2.new(1, -30, 0, 5)
-closeButton.Text = "X"
-closeButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeButton.Parent = mainFrame
-
-closeButton.MouseButton1Click:Connect(function()
-	screenGui.Enabled = false
-end)
-
--- Fungsi Noclip + Immortal
-local function setNoclip(state)
-	if player.Character then
-		for _, part in pairs(player.Character:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = not state
-			end
-		end
-	end
-	if humanoid then
-		if state then
-			humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-			humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-			humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
-			humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-			humanoid.Health = math.huge
+-- Keybind Toggles
+UIS.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode == Enum.KeyCode.B then
+		NOCLIP_ENABLED = not NOCLIP_ENABLED
+	elseif input.KeyCode == Enum.KeyCode.F then
+		FLY_ENABLED = not FLY_ENABLED
+		if FLY_ENABLED then
+			bodyVelocity = Instance.new("BodyVelocity")
+			bodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
+			bodyVelocity.Velocity = Vector3.new(0,0,0)
+			bodyVelocity.Parent = rootPart
 		else
-			humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
-			humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
-			humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
-			humanoid.Health = 100
+			if bodyVelocity then bodyVelocity:Destroy() end
 		end
+	elseif input.KeyCode == Enum.KeyCode.G then
+		SPEED_ENABLED = not SPEED_ENABLED
+	elseif input.KeyCode == Enum.KeyCode.H then
+		INFJUMP_ENABLED = not INFJUMP_ENABLED
+	elseif input.KeyCode == Enum.KeyCode.J then
+		JUMPBOOST_ENABLED = not JUMPBOOST_ENABLED
+		if humanoid then
+			humanoid.UseJumpPower = true
+			humanoid.JumpPower = JUMPBOOST_ENABLED and JUMP_POWER or 50
+		end
+	elseif input.KeyCode == Enum.KeyCode.Up then
+		if rootPart then rootPart.CFrame = rootPart.CFrame + rootPart.CFrame.LookVector * TELEPORT_DIST end
+	elseif input.KeyCode == Enum.KeyCode.Down then
+		if rootPart then rootPart.CFrame = rootPart.CFrame - rootPart.CFrame.LookVector * TELEPORT_DIST end
 	end
-end
+	updateStatus()
+end)
 
--- Toggle Fly
-local function toggleFly()
-	flying = not flying
-	if flying then
-		flyButton.Text = "Fly: ON"
-		flyButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-		bodyVelocity = Instance.new("BodyVelocity")
-		bodyVelocity.Velocity = Vector3.new(0,0,0)
-		bodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
-		bodyVelocity.Parent = humanoidRootPart
-
-		RunService.Stepped:Connect(function()
-			if flying and player.Character then
-				setNoclip(true)
-			end
-		end)
-	else
-		flyButton.Text = "Fly: OFF"
-		flyButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		if bodyVelocity then bodyVelocity:Destroy() end
-		setNoclip(false)
+-- Infinite Jump
+UIS.JumpRequest:Connect(function()
+	if INFJUMP_ENABLED and humanoid then
+		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 	end
-end
-flyButton.MouseButton1Click:Connect(toggleFly)
+end)
 
--- Kontrol Fly (support first person precision)
+-- Fly Movement
 RunService.Heartbeat:Connect(function()
-	if flying and humanoidRootPart and humanoid then
-		local moveDir = Vector3.new(0,0,0)
+	if FLY_ENABLED and rootPart and humanoid then
+		local move = Vector3.new()
 		local camCF = workspace.CurrentCamera.CFrame
-		local camLook = camCF.LookVector
-		local camRight = camCF.RightVector
+		local look, right = camCF.LookVector, camCF.RightVector
 
-		local isFirstPerson = (workspace.CurrentCamera.CFrame.Position - player.Character.Head.Position).Magnitude < 1
+		if UIS:IsKeyDown(Enum.KeyCode.W) then move = move + look end
+		if UIS:IsKeyDown(Enum.KeyCode.S) then move = move - look end
+		if UIS:IsKeyDown(Enum.KeyCode.A) then move = move - right end
+		if UIS:IsKeyDown(Enum.KeyCode.D) then move = move + right end
+		if UIS:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
+		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move = move - Vector3.new(0,1,0) end
 
-		if isFirstPerson then
-			-- Kontrol presisi penuh sesuai kamera
-			if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camLook end
-			if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camLook end
-			if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camRight end
-			if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camRight end
-			if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + camCF.UpVector end
-			if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - camCF.UpVector end
+		if move.Magnitude > 0 then
+			bodyVelocity.Velocity = move.Unit * FLY_SPEED
 		else
-			-- Mode normal (third person)
-			if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camLook end
-			if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camLook end
-			if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camRight end
-			if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camRight end
-			if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
-			if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir + Vector3.new(0,-1,0) end
+			bodyVelocity.Velocity = Vector3.new(0,0,0)
 		end
+	end
+end)
 
-		if moveDir.Magnitude > 0 then
-			moveDir = moveDir.Unit * flySpeed * currentMultiplier
-			if not bodyVelocity or not bodyVelocity.Parent then
-				bodyVelocity = Instance.new("BodyVelocity")
-				bodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
-				bodyVelocity.Velocity = Vector3.new(0,0,0)
-				bodyVelocity.Parent = humanoidRootPart
-			end
-			bodyVelocity.Velocity = moveDir
-			humanoid:Move((camLook * moveDir.Z) + (camRight * moveDir.X))
-		else
-			if bodyVelocity then bodyVelocity.Velocity = Vector3.new(0,0,0) end
-			humanoid:Move(Vector3.new(0,0,0))
+-- NoClip
+RunService.Stepped:Connect(function()
+	if NOCLIP_ENABLED and player.Character then
+		for _, part in ipairs(player.Character:GetDescendants()) do
+			if part:IsA("BasePart") then part.CanCollide = false end
 		end
+	end
+end)
 
-		humanoid.PlatformStand = false
+-- Speed Hack
+RunService.RenderStepped:Connect(function()
+	if SPEED_ENABLED and humanoid then
+		humanoid.WalkSpeed = 16 * SPEED_MULTIPLIER
+	else
+		humanoid.WalkSpeed = 16
+	end
+end)
+
+-- Cleanup on leave
+player.AncestryChanged:Connect(function(_, parent)
+	if not parent then
+		if bodyVelocity then bodyVelocity:Destroy() end
+		screenGui:Destroy()
 	end
 end)
