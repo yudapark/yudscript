@@ -1,5 +1,5 @@
 -- LocalScript @ StarterPlayerScripts
--- Fly Controller Mobile + Speed Preset + Noclip + Waypoint Teleport + Theme UI
+-- Fly Controller Mobile + Speed Preset + Noclip + Waypoint Teleport + Theme UI + Teleport to Player
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -16,7 +16,7 @@ local accel = 10
 local currentVel = Vector3.zero
 local verticalInput = 0
 local align
-local waypoints = {} -- table untuk simpan waypoint
+local waypoints = {}
 local themes = {
 	["Dark"] = {bg=Color3.fromRGB(22,22,22), btn=Color3.fromRGB(40,140,80)},
 	["Neon"] = {bg=Color3.fromRGB(10,10,40), btn=Color3.fromRGB(80,0,200)},
@@ -44,6 +44,20 @@ local function ensureAlign(hrp)
 	align.Parent = hrp
 end
 
+local function makeBtn(parent, text, size, pos, color)
+	local b = Instance.new("TextButton")
+	b.Size = size
+	b.Position = pos
+	b.Text = text
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 14
+	b.BackgroundColor3 = color or themes[currentTheme].btn
+	b.TextColor3 = Color3.fromRGB(255,255,255)
+	b.Parent = parent
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+	return b
+end
+
 -- ===== GUI BUILD =====
 local gui = Instance.new("ScreenGui")
 gui.Name = "FlyMobileUI"
@@ -51,7 +65,7 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.fromOffset(300, 220)
+frame.Size = UDim2.fromOffset(300, 320)
 frame.Position = UDim2.new(0, 20, 0, 120)
 frame.BackgroundColor3 = themes[currentTheme].bg
 frame.BorderSizePixel = 0
@@ -70,20 +84,6 @@ title.TextSize = 16
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
-
-local function makeBtn(parent, text, size, pos, color)
-	local b = Instance.new("TextButton")
-	b.Size = size
-	b.Position = pos
-	b.Text = text
-	b.Font = Enum.Font.GothamBold
-	b.TextSize = 14
-	b.BackgroundColor3 = color or themes[currentTheme].btn
-	b.TextColor3 = Color3.fromRGB(255,255,255)
-	b.Parent = parent
-	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
-	return b
-end
 
 -- Minimize / Close
 local btnMin = makeBtn(frame,"–",UDim2.fromOffset(28,24),UDim2.new(1,-64,0,6),Color3.fromRGB(50,50,50))
@@ -127,7 +127,7 @@ local btnClearWP = makeBtn(waypointFrame,"Clear",UDim2.fromOffset(70,28),UDim2.n
 -- Theme Dropdown
 local themeDropdown = Instance.new("TextButton")
 themeDropdown.Size = UDim2.fromOffset(120, 28)
-themeDropdown.Position = UDim2.new(0, 10, 0, 170)
+themeDropdown.Position = UDim2.new(0, 10, 0, 190)
 themeDropdown.Text = "Theme: "..currentTheme
 themeDropdown.Font = Enum.Font.GothamBold
 themeDropdown.TextSize = 14
@@ -135,6 +135,67 @@ themeDropdown.BackgroundColor3 = Color3.fromRGB(80,80,80)
 themeDropdown.TextColor3 = Color3.fromRGB(255,255,255)
 themeDropdown.Parent = frame
 Instance.new("UICorner", themeDropdown).CornerRadius = UDim.new(0, 8)
+
+-- Teleport to Player UI
+local tpFrame = Instance.new("Frame")
+tpFrame.Size = UDim2.fromOffset(260, 100)
+tpFrame.Position = UDim2.new(0, 10, 0, 230)
+tpFrame.BackgroundTransparency = 1
+tpFrame.Parent = frame
+
+local searchBox = Instance.new("TextBox")
+searchBox.Size = UDim2.fromOffset(240, 24)
+searchBox.Position = UDim2.new(0,0,0,0)
+searchBox.PlaceholderText = "Search Player..."
+searchBox.Font = Enum.Font.Gotham
+searchBox.TextSize = 14
+searchBox.TextColor3 = Color3.fromRGB(255,255,255)
+searchBox.BackgroundColor3 = Color3.fromRGB(60,60,60)
+searchBox.Parent = tpFrame
+Instance.new("UICorner", searchBox).CornerRadius = UDim.new(0,6)
+
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.fromOffset(240, 70)
+scroll.Position = UDim2.new(0,0,0,28)
+scroll.CanvasSize = UDim2.new(0,0,0,0)
+scroll.ScrollBarThickness = 6
+scroll.BackgroundColor3 = Color3.fromRGB(30,30,30)
+scroll.Parent = tpFrame
+Instance.new("UICorner", scroll).CornerRadius = UDim.new(0,6)
+
+local listLayout = Instance.new("UIListLayout", scroll)
+listLayout.Padding = UDim.new(0,2)
+
+local function refreshPlayerList()
+	for _,c in ipairs(scroll:GetChildren()) do
+		if c:IsA("TextButton") then c:Destroy() end
+	end
+	local query = searchBox.Text:lower()
+	for _,plr in ipairs(Players:GetPlayers()) do
+		if plr ~= player and plr.Name:lower():find(query) then
+			local btn = Instance.new("TextButton")
+			btn.Size = UDim2.new(1,0,0,24)
+			btn.Text = plr.Name
+			btn.Font = Enum.Font.Gotham
+			btn.TextSize = 14
+			btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+			btn.TextColor3 = Color3.fromRGB(255,255,255)
+			btn.Parent = scroll
+			btn.MouseButton1Click:Connect(function()
+				local _, hrp = getChar()
+				if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+					hrp.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+				end
+			end)
+		end
+	end
+	scroll.CanvasSize = UDim2.new(0,0,0,#scroll:GetChildren()*26)
+end
+
+searchBox:GetPropertyChangedSignal("Text"):Connect(refreshPlayerList)
+Players.PlayerAdded:Connect(refreshPlayerList)
+Players.PlayerRemoving:Connect(refreshPlayerList)
+refreshPlayerList()
 
 -- Naik / Turun
 local btnUp = makeBtn(gui,"↑",UDim2.fromOffset(60,60),UDim2.new(1,-80,1,-160),Color3.fromRGB(40,120,200))
@@ -198,7 +259,8 @@ btnMin.MouseButton1Click:Connect(function()
 	presetFrame.Visible = not minimized
 	waypointFrame.Visible = not minimized
 	themeDropdown.Visible = not minimized
-	frame.Size = minimized and UDim2.fromOffset(300, 36) or UDim2.fromOffset(300, 220)
+	tpFrame.Visible = not minimized
+	frame.Size = minimized and UDim2.fromOffset(300, 36) or UDim2.fromOffset(300, 320)
 end)
 
 btnClose.MouseButton1Click:Connect(function()
