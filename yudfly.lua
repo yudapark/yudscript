@@ -1,6 +1,5 @@
 -- LocalScript @ StarterPlayerScripts
--- Fly + Mobile control (joystick + tombol naik/turun)
--- GUI: Start/Stop, Minimize, Close, Speed preset (x1 s/d x8), Noclip toggle
+-- Fly Controller Mobile + Speed Preset + Noclip + Waypoint Teleport + Theme UI
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -17,6 +16,13 @@ local accel = 10
 local currentVel = Vector3.zero
 local verticalInput = 0
 local align
+local waypoints = {} -- table untuk simpan waypoint
+local themes = {
+	["Dark"] = {bg=Color3.fromRGB(22,22,22), btn=Color3.fromRGB(40,140,80)},
+	["Neon"] = {bg=Color3.fromRGB(10,10,40), btn=Color3.fromRGB(80,0,200)},
+	["Retro"] = {bg=Color3.fromRGB(40,20,0), btn=Color3.fromRGB(200,120,40)},
+}
+local currentTheme = "Dark"
 
 -- ===== UTIL =====
 local function getChar()
@@ -45,10 +51,9 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.fromOffset(280, 160)
+frame.Size = UDim2.fromOffset(300, 220)
 frame.Position = UDim2.new(0, 20, 0, 120)
-frame.BackgroundColor3 = Color3.fromRGB(22,22,22)
-frame.BackgroundTransparency = 0.1
+frame.BackgroundColor3 = themes[currentTheme].bg
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
@@ -66,104 +71,82 @@ title.TextColor3 = Color3.fromRGB(255,255,255)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
 
--- tombol minimize & close
-local function makeBtn(txt, pos, color)
+local function makeBtn(parent, text, size, pos, color)
 	local b = Instance.new("TextButton")
-	b.Size = UDim2.fromOffset(28, 24)
+	b.Size = size
 	b.Position = pos
-	b.Text = txt
+	b.Text = text
 	b.Font = Enum.Font.GothamBold
-	b.TextSize = 18
-	b.BackgroundColor3 = color
+	b.TextSize = 14
+	b.BackgroundColor3 = color or themes[currentTheme].btn
 	b.TextColor3 = Color3.fromRGB(255,255,255)
-	b.Parent = frame
+	b.Parent = parent
 	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
 	return b
 end
-local btnMin = makeBtn("–", UDim2.new(1, -64, 0, 6), Color3.fromRGB(50,50,50))
-local btnClose = makeBtn("×", UDim2.new(1, -32, 0, 6), Color3.fromRGB(120,40,40))
 
--- tombol start/stop
-local btnToggle = Instance.new("TextButton")
-btnToggle.Size = UDim2.new(0, 110, 0, 36)
-btnToggle.Position = UDim2.new(0, 10, 0, 48)
-btnToggle.Text = "Start"
-btnToggle.Font = Enum.Font.GothamBold
-btnToggle.TextSize = 16
-btnToggle.BackgroundColor3 = Color3.fromRGB(40,140,80)
-btnToggle.TextColor3 = Color3.fromRGB(255,255,255)
-btnToggle.Parent = frame
-Instance.new("UICorner", btnToggle).CornerRadius = UDim.new(0, 10)
+-- Minimize / Close
+local btnMin = makeBtn(frame,"–",UDim2.fromOffset(28,24),UDim2.new(1,-64,0,6),Color3.fromRGB(50,50,50))
+local btnClose = makeBtn(frame,"×",UDim2.fromOffset(28,24),UDim2.new(1,-32,0,6),Color3.fromRGB(120,40,40))
 
--- Noclip button
-local btnNoclip = Instance.new("TextButton")
-btnNoclip.Size = UDim2.new(0, 110, 0, 36)
-btnNoclip.Position = UDim2.new(0, 140, 0, 48)
-btnNoclip.Text = "Noclip: OFF"
-btnNoclip.Font = Enum.Font.GothamBold
-btnNoclip.TextSize = 16
-btnNoclip.BackgroundColor3 = Color3.fromRGB(80,80,120)
-btnNoclip.TextColor3 = Color3.fromRGB(255,255,255)
-btnNoclip.Parent = frame
-Instance.new("UICorner", btnNoclip).CornerRadius = UDim.new(0, 10)
+-- Start / Stop
+local btnToggle = makeBtn(frame,"Start",UDim2.new(0,110,0,36),UDim2.new(0,10,0,48))
 
--- Speed preset buttons
+-- Noclip
+local btnNoclip = makeBtn(frame,"Noclip: OFF",UDim2.new(0,110,0,36),UDim2.new(0,150,0,48),Color3.fromRGB(80,80,120))
+
+-- Preset Speed
 local presetFrame = Instance.new("Frame")
-presetFrame.Size = UDim2.fromOffset(260, 60)
-presetFrame.Position = UDim2.new(0, 10, 0, 96)
+presetFrame.Size = UDim2.fromOffset(260, 30)
+presetFrame.Position = UDim2.new(0, 10, 0, 90)
 presetFrame.BackgroundTransparency = 1
 presetFrame.Parent = frame
-
 for i=1,8 do
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.fromOffset(28, 28)
-	btn.Position = UDim2.new(0, (i-1)*32, 0, 0)
-	btn.Text = "x"..i
-	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 14
-	btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
-	btn.TextColor3 = Color3.fromRGB(255,255,255)
-	btn.Parent = presetFrame
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-
+	local btn = makeBtn(presetFrame,"x"..i,UDim2.fromOffset(28,28),UDim2.new(0,(i-1)*32,0,0),Color3.fromRGB(60,60,60))
 	btn.MouseButton1Click:Connect(function()
 		speed = baseSpeed * i
 		verticalSpeed = speed
 		for _,b in ipairs(presetFrame:GetChildren()) do
 			if b:IsA("TextButton") then b.BackgroundColor3 = Color3.fromRGB(60,60,60) end
 		end
-		btn.BackgroundColor3 = Color3.fromRGB(40,140,80)
+		btn.BackgroundColor3 = themes[currentTheme].btn
 	end)
 end
 
--- tombol naik/turun
-local btnUp = Instance.new("TextButton")
-btnUp.Size = UDim2.fromOffset(60, 60)
-btnUp.Position = UDim2.new(1, -80, 1, -160)
-btnUp.Text = "↑"
-btnUp.Font = Enum.Font.GothamBold
+-- Waypoint Controls
+local waypointFrame = Instance.new("Frame")
+waypointFrame.Size = UDim2.fromOffset(260, 60)
+waypointFrame.Position = UDim2.new(0, 10, 0, 130)
+waypointFrame.BackgroundTransparency = 1
+waypointFrame.Parent = frame
+
+local btnSaveWP = makeBtn(waypointFrame,"Save WP",UDim2.fromOffset(80,28),UDim2.new(0,0,0,0),Color3.fromRGB(60,120,60))
+local btnTpWP = makeBtn(waypointFrame,"TP WP",UDim2.fromOffset(80,28),UDim2.new(0,90,0,0),Color3.fromRGB(120,60,60))
+local btnClearWP = makeBtn(waypointFrame,"Clear",UDim2.fromOffset(70,28),UDim2.new(0,180,0,0),Color3.fromRGB(80,80,80))
+
+-- Theme Dropdown
+local themeDropdown = Instance.new("TextButton")
+themeDropdown.Size = UDim2.fromOffset(120, 28)
+themeDropdown.Position = UDim2.new(0, 10, 0, 170)
+themeDropdown.Text = "Theme: "..currentTheme
+themeDropdown.Font = Enum.Font.GothamBold
+themeDropdown.TextSize = 14
+themeDropdown.BackgroundColor3 = Color3.fromRGB(80,80,80)
+themeDropdown.TextColor3 = Color3.fromRGB(255,255,255)
+themeDropdown.Parent = frame
+Instance.new("UICorner", themeDropdown).CornerRadius = UDim.new(0, 8)
+
+-- Naik / Turun
+local btnUp = makeBtn(gui,"↑",UDim2.fromOffset(60,60),UDim2.new(1,-80,1,-160),Color3.fromRGB(40,120,200))
 btnUp.TextSize = 28
-btnUp.BackgroundColor3 = Color3.fromRGB(40,120,200)
-btnUp.TextColor3 = Color3.fromRGB(255,255,255)
-btnUp.Parent = gui
-Instance.new("UICorner", btnUp).CornerRadius = UDim.new(1, 0)
-
-local btnDown = Instance.new("TextButton")
-btnDown.Size = UDim2.fromOffset(60, 60)
-btnDown.Position = UDim2.new(1, -80, 1, -90)
-btnDown.Text = "↓"
-btnDown.Font = Enum.Font.GothamBold
+local btnDown = makeBtn(gui,"↓",UDim2.fromOffset(60,60),UDim2.new(1,-80,1,-90),Color3.fromRGB(200,80,40))
 btnDown.TextSize = 28
-btnDown.BackgroundColor3 = Color3.fromRGB(200,80,40)
-btnDown.TextColor3 = Color3.fromRGB(255,255,255)
-btnDown.Parent = gui
-Instance.new("UICorner", btnDown).CornerRadius = UDim.new(1, 0)
 
--- ===== GUI LOGIC =====
+-- ===== LOGIC =====
 btnToggle.MouseButton1Click:Connect(function()
 	flying = not flying
 	btnToggle.Text = flying and "Stop" or "Start"
-	btnToggle.BackgroundColor3 = flying and Color3.fromRGB(180,60,60) or Color3.fromRGB(40,140,80)
+	btnToggle.BackgroundColor3 = flying and Color3.fromRGB(180,60,60) or themes[currentTheme].btn
 	local _, _, hum = getChar()
 	if flying then hum:ChangeState(Enum.HumanoidStateType.Physics)
 	else hum:ChangeState(Enum.HumanoidStateType.RunningNoPhysics) end
@@ -175,23 +158,53 @@ btnNoclip.MouseButton1Click:Connect(function()
 	btnNoclip.BackgroundColor3 = noclip and Color3.fromRGB(200,80,80) or Color3.fromRGB(80,80,120)
 end)
 
-btnMin.MouseButton1Click:Connect(function()
-	minimized = not minimized
-	btnToggle.Visible = not minimized
-	btnNoclip.Visible = not minimized
-	presetFrame.Visible = not minimized
-	frame.Size = minimized and UDim2.fromOffset(280, 36) or UDim2.fromOffset(280, 160)
+btnSaveWP.MouseButton1Click:Connect(function()
+	local _, hrp = getChar()
+	table.insert(waypoints, hrp.CFrame)
+	btnSaveWP.Text = "Saved ("..#waypoints..")"
 end)
 
-btnClose.MouseButton1Click:Connect(function()
-	gui:Destroy()
-	flying = false
+btnTpWP.MouseButton1Click:Connect(function()
+	if #waypoints > 0 then
+		local _, hrp = getChar()
+		hrp.CFrame = waypoints[#waypoints]
+	end
+end)
+
+btnClearWP.MouseButton1Click:Connect(function()
+	waypoints = {}
+	btnSaveWP.Text = "Save WP"
+end)
+
+themeDropdown.MouseButton1Click:Connect(function()
+	local keys = {}
+	for k,_ in pairs(themes) do table.insert(keys,k) end
+	local nextIndex = table.find(keys,currentTheme) % #keys + 1
+	currentTheme = keys[nextIndex]
+	themeDropdown.Text = "Theme: "..currentTheme
+	frame.BackgroundColor3 = themes[currentTheme].bg
+	btnToggle.BackgroundColor3 = themes[currentTheme].btn
 end)
 
 btnUp.MouseButton1Down:Connect(function() verticalInput = 1 end)
 btnUp.MouseButton1Up:Connect(function() verticalInput = 0 end)
 btnDown.MouseButton1Down:Connect(function() verticalInput = -1 end)
 btnDown.MouseButton1Up:Connect(function() verticalInput = 0 end)
+
+btnMin.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	btnToggle.Visible = not minimized
+	btnNoclip.Visible = not minimized
+	presetFrame.Visible = not minimized
+	waypointFrame.Visible = not minimized
+	themeDropdown.Visible = not minimized
+	frame.Size = minimized and UDim2.fromOffset(300, 36) or UDim2.fromOffset(300, 220)
+end)
+
+btnClose.MouseButton1Click:Connect(function()
+	gui:Destroy()
+	flying = false
+end)
 
 -- ===== FLY LOOP =====
 RunService.RenderStepped:Connect(function(dt)
@@ -214,8 +227,6 @@ RunService.RenderStepped:Connect(function(dt)
 		align.CFrame = CFrame.Angles(0, y, 0)
 
 		hum.PlatformStand = true
-
-		-- Noclip: matiin CanCollide semua part di character
 		if noclip then
 			for _,v in pairs(char:GetDescendants()) do
 				if v:IsA("BasePart") then v.CanCollide = false end
