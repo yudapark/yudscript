@@ -25,6 +25,8 @@ local GUI_COLORS = {
 local currentTheme = 1
 local SPEED_PRESETS = {2, 4, 6, 8}
 local espAdornments = {}
+local selectedPlayer = nil
+local isMobile = UIS.TouchEnabled
 
 -- Setup Char
 local function setupChar()
@@ -41,7 +43,7 @@ screenGui.Name = "YudaHub"
 screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 260, 0, 520) -- Adjusted for new buttons
+mainFrame.Size = UDim2.new(0, 300, 0, 550) -- Increased width for better player selection
 mainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
@@ -113,7 +115,7 @@ local tpFBtn = makeBtn("➡️ Teleport Forward [↑]")
 local tpBBtn = makeBtn("⬅️ Teleport Backward [↓]")
 local espBtn = makeBtn("👁️ ESP [E]")
 local godModeBtn = makeBtn("🛡️ God Mode [M]")
-local antiAfkBtn = makeBtn("😴 Anti-AFK [A]")
+local antiAfkBtn = makeBtn("😴 Anti-AFK [0]")
 
 -- Speed Control Frame
 local speedFrame = Instance.new("Frame", content)
@@ -176,25 +178,27 @@ end
 
 -- Teleport to Player Frame
 local tpPlayerFrame = Instance.new("Frame", content)
-tpPlayerFrame.Size = UDim2.new(1, 0, 0, 30)
+tpPlayerFrame.Size = UDim2.new(1, 0, 0, 60)
 tpPlayerFrame.BackgroundTransparency = 1
 
 local tpPlayerLabel = Instance.new("TextLabel", tpPlayerFrame)
-tpPlayerLabel.Size = UDim2.new(0.4, 0, 1, 0)
+tpPlayerLabel.Size = UDim2.new(1, 0, 0, 30)
 tpPlayerLabel.Text = "TP Player:"
 tpPlayerLabel.TextColor3 = GUI_COLORS[currentTheme].color
 tpPlayerLabel.Font = Enum.Font.GothamBold
 tpPlayerLabel.TextSize = 14
 tpPlayerLabel.BackgroundTransparency = 1
 
-local tpPlayerDropdown = Instance.new("TextButton", tpPlayerFrame)
-tpPlayerDropdown.Size = UDim2.new(0.6, 0, 1, 0)
-tpPlayerDropdown.Position = UDim2.new(0.4, 0, 0, 0)
-tpPlayerDropdown.Text = "Select Player"
-tpPlayerDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-tpPlayerDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
-tpPlayerDropdown.Font = Enum.Font.GothamBold
-tpPlayerDropdown.TextSize = 14
+local tpPlayerList = Instance.new("ScrollingFrame", tpPlayerFrame)
+tpPlayerList.Size = UDim2.new(1, 0, 0, 30)
+tpPlayerList.Position = UDim2.new(0, 0, 0, 30)
+tpPlayerList.BackgroundTransparency = 1
+tpPlayerList.CanvasSize = UDim2.new(0, 0, 0, 0)
+tpPlayerList.ScrollBarThickness = 4
+
+local tpPlayerListLayout = Instance.new("UIListLayout", tpPlayerList)
+tpPlayerListLayout.Padding = UDim.new(0, 2)
+tpPlayerListLayout.FillDirection = Enum.FillDirection.Vertical
 
 -- Visual Customization Frame
 local themeFrame = Instance.new("Frame", content)
@@ -218,6 +222,48 @@ themeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 themeBtn.Font = Enum.Font.GothamBold
 themeBtn.TextSize = 14
 
+-- Mobile Fly Joystick
+local joystickFrame = Instance.new("Frame", screenGui)
+joystickFrame.Size = UDim2.new(0, 150, 0, 150)
+joystickFrame.Position = UDim2.new(0.1, 0, 0.7, 0)
+joystickFrame.BackgroundTransparency = 0.5
+joystickFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+joystickFrame.Visible = false
+joystickFrame.Active = true
+
+local joystickKnob = Instance.new("Frame", joystickFrame)
+joystickKnob.Size = UDim2.new(0, 50, 0, 50)
+joystickKnob.Position = UDim2.new(0.5, -25, 0.5, -25)
+joystickKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+joystickKnob.BackgroundTransparency = 0.5
+
+local touchId = nil
+local centerPos = Vector2.new(75, 75)
+local maxDist = 75
+
+joystickFrame.TouchBegan:Connect(function(input)
+    if touchId == nil then
+        touchId = input.UserInputId
+        joystickKnob.Position = UDim2.new(0.5, -25, 0.5, -25)
+    end
+end)
+
+joystickFrame.TouchMoved:Connect(function(input)
+    if input.UserInputId == touchId then
+        local pos = Vector2.new(input.Position.X - joystickFrame.AbsolutePosition.X, input.Position.Y - joystickFrame.AbsolutePosition.Y)
+        local dir = (pos - centerPos).Unit
+        local dist = math.min((pos - centerPos).Magnitude, maxDist)
+        joystickKnob.Position = UDim2.new(0.5 + (dir.X * dist / joystickFrame.AbsoluteSize.X), -25, 0.5 + (dir.Y * dist / joystickFrame.AbsoluteSize.Y), -25)
+    end
+end)
+
+joystickFrame.TouchEnded:Connect(function(input)
+    if input.UserInputId == touchId then
+        touchId = nil
+        joystickKnob.Position = UDim2.new(0.5, -25, 0.5, -25)
+    end
+end)
+
 -- Update Speed Label
 local function updateSpeedLabel()
     speedLabel.Text = "⚡ Speed: x" .. tostring(currentSpeedMult)
@@ -237,7 +283,45 @@ local function updateTheme()
             if stroke then stroke.Color = GUI_COLORS[currentTheme].color end
         end
     end
+    for _, btn in ipairs(tpPlayerList:GetChildren()) do
+        if btn:IsA("TextButton") then
+            local stroke = btn:FindFirstChildOfClass("UIStroke")
+            if stroke then stroke.Color = GUI_COLORS[currentTheme].color end
+        end
+    end
 end
+
+-- Update Player List
+local function updatePlayerList()
+    for _, btn in ipairs(tpPlayerList:GetChildren()) do
+        if btn:IsA("TextButton") then btn:Destroy() end
+    end
+    local players = Players:GetPlayers()
+    tpPlayerList.CanvasSize = UDim2.new(0, 0, 0, #players * 32)
+    for _, p in ipairs(players) do
+        if p ~= player then
+            local btn = Instance.new("TextButton", tpPlayerList)
+            btn.Size = UDim2.new(1, 0, 0, 30)
+            btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.Font = Enum.Font.GothamBold
+            btn.TextSize = 14
+            btn.Text = p.Name
+            local stroke = Instance.new("UIStroke", btn)
+            stroke.Color = GUI_COLORS[currentTheme].color
+            stroke.Thickness = 1
+            btn.MouseButton1Click:Connect(function()
+                selectedPlayer = p
+                if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    rootPart.CFrame = p.Character.HumanoidRootPart.CFrame
+                end
+            end)
+        end
+    end
+end
+updatePlayerList()
+Players.PlayerAdded:Connect(updatePlayerList)
+Players.PlayerRemoving:Connect(updatePlayerList)
 
 plusBtn.MouseButton1Click:Connect(function()
     if currentSpeedMult < 8 then
@@ -266,8 +350,12 @@ local function toggleFly()
         bodyVelocity = Instance.new("BodyVelocity")
         bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
         bodyVelocity.Parent = rootPart
+        if isMobile then
+            joystickFrame.Visible = true
+        end
     else
         if bodyVelocity then bodyVelocity:Destroy() end
+        joystickFrame.Visible = false
     end
     flyBtn.Text = "✈️ Fly [F] : " .. (FLY_ENABLED and "ON" or "OFF")
 end
@@ -309,7 +397,7 @@ end
 
 local function toggleAntiAFK()
     ANTIAFK_ENABLED = not ANTIAFK_ENABLED
-    antiAfkBtn.Text = "😴 Anti-AFK [A] : " .. (ANTIAFK_ENABLED and "ON" or "OFF")
+    antiAfkBtn.Text = "😴 Anti-AFK [0] : " .. (ANTIAFK_ENABLED and "ON" or "OFF")
 end
 
 -- Bind Buttons
@@ -328,39 +416,13 @@ espBtn.MouseButton1Click:Connect(toggleESP)
 godModeBtn.MouseButton1Click:Connect(toggleGodMode)
 antiAfkBtn.MouseButton1Click:Connect(toggleAntiAFK)
 
--- Teleport to Player Dropdown
-local function updatePlayerDropdown()
-    local players = Players:GetPlayers()
-    local dropdownText = "Select Player"
-    if #players > 1 then
-        for i, p in ipairs(players) do
-            if p ~= player then
-                dropdownText = p.Name
-                break
-            end
-        end
-    end
-    tpPlayerDropdown.Text = dropdownText
-    tpPlayerDropdown.MouseButton1Click:Connect(function()
-        for _, p in ipairs(players) do
-            if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                rootPart.CFrame = p.Character.HumanoidRootPart.CFrame
-                break
-            end
-        end
-    end)
-end
-updatePlayerDropdown()
-Players.PlayerAdded:Connect(updatePlayerDropdown)
-Players.PlayerRemoving:Connect(updatePlayerDropdown)
-
 -- Close/Minimize
 closeBtn.MouseButton1Click:Connect(function() screenGui:Destroy() end)
 local minimized = false
 minBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
     content.Visible = not minimized
-    mainFrame.Size = minimized and UDim2.new(0, 260, 0, 35) or UDim2.new(0, 260, 0, 520)
+    mainFrame.Size = minimized and UDim2.new(0, 300, 0, 35) or UDim2.new(0, 300, 0, 550)
 end)
 
 -- Keyboard Shortcuts
@@ -375,13 +437,10 @@ UIS.InputBegan:Connect(function(i, g)
     elseif i.KeyCode == Enum.KeyCode.Down then if rootPart then rootPart.CFrame = rootPart.CFrame - rootPart.CFrame.LookVector * TELEPORT_DIST end
     elseif i.KeyCode == Enum.KeyCode.E then toggleESP()
     elseif i.KeyCode == Enum.KeyCode.M then toggleGodMode()
-    elseif i.KeyCode == Enum.KeyCode.A then toggleAntiAFK()
+    elseif i.KeyCode == Enum.KeyCode.Zero then toggleAntiAFK()
     elseif i.KeyCode == Enum.KeyCode.T then
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                rootPart.CFrame = p.Character.HumanoidRootPart.CFrame
-                break
-            end
+        if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            rootPart.CFrame = selectedPlayer.Character.HumanoidRootPart.CFrame
         end
     end
 end)
@@ -400,12 +459,21 @@ RunService.Heartbeat:Connect(function()
         local camCF = workspace.CurrentCamera.CFrame
         local look, right = camCF.LookVector, camCF.RightVector
 
-        if UIS:IsKeyDown(Enum.KeyCode.W) then move += look end
-        if UIS:IsKeyDown(Enum.KeyCode.S) then move -= look end
-        if UIS:IsKeyDown(Enum.KeyCode.A) then move -= right end
-        if UIS:IsKeyDown(Enum.KeyCode.D) then move += right end
-        if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
-        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0, 1, 0) end
+        if isMobile and touchId then
+            local knobPos = Vector2.new(joystickKnob.AbsolutePosition.X + 25, joystickKnob.AbsolutePosition.Y + 25) - joystickFrame.AbsolutePosition
+            local dir = (knobPos - centerPos) / maxDist
+            if dir.Magnitude > 1 then dir = dir.Unit end
+            move = Vector3.new(dir.X, 0, dir.Y) -- Map to XZ plane
+            move = camCF:VectorToWorldSpace(move) -- Align with camera
+            move = Vector3.new(move.X, 0, move.Z).Unit -- Ignore Y for horizontal
+        else
+            if UIS:IsKeyDown(Enum.KeyCode.W) then move += look end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then move -= look end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then move -= right end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then move += right end
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
+            if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0, 1, 0) end
+        end
 
         if move.Magnitude > 0 then
             bodyVelocity.Velocity = move.Unit * (BASE_FLY_SPEED * currentSpeedMult)
