@@ -231,25 +231,30 @@ UIS.JumpRequest:Connect(function()
 	end
 end)
 
--- Fly Handler
+-- Fly Handler (NO SLIDE / NO LICIN)
 RunService.Heartbeat:Connect(function()
 	if FLY_ENABLED and rootPart and humanoid and bodyVelocity then
 		local move = Vector3.new()
 		local camCF = workspace.CurrentCamera.CFrame
 		local look, right = camCF.LookVector, camCF.RightVector
-		if UIS:IsKeyDown(Enum.KeyCode.W) then move = move + look end
-		if UIS:IsKeyDown(Enum.KeyCode.S) then move = move - look end
-		if UIS:IsKeyDown(Enum.KeyCode.A) then move = move - right end
-		if UIS:IsKeyDown(Enum.KeyCode.D) then move = move + right end
-		if UIS:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
-		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move = move - Vector3.new(0,1,0) end
+
+		if UIS:IsKeyDown(Enum.KeyCode.W) then move += look end
+		if UIS:IsKeyDown(Enum.KeyCode.S) then move -= look end
+		if UIS:IsKeyDown(Enum.KeyCode.A) then move -= right end
+		if UIS:IsKeyDown(Enum.KeyCode.D) then move += right end
+		if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
+		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0,1,0) end
+
 		if move.Magnitude > 0 then
 			bodyVelocity.Velocity = move.Unit * (BASE_FLY_SPEED * currentSpeedMult)
 		else
-			bodyVelocity.Velocity = Vector3.new(0,0,0)
+			-- ❌ langsung berhenti, ga ngeluncur/geser
+			bodyVelocity.Velocity = Vector3.zero
+			rootPart.AssemblyLinearVelocity = Vector3.zero
 		end
 	end
 end)
+
 
 -- NoClip
 RunService.Stepped:Connect(function()
