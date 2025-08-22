@@ -1,5 +1,5 @@
 -- LocalScript di StarterGui
--- Fly GUI lengkap dengan: noclip, speed multiplier, draggable GUI, minimize/close, dan persist saat respawn
+-- Fly GUI lengkap: noclip, speed multiplier, draggable GUI, minimize/close, persist, full ghost (no death on fall/collision)
 
 local player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
@@ -9,16 +9,19 @@ local flying = false
 local flySpeed = 50
 local bodyVelocity
 local currentMultiplier = 1
+local humanoidRootPart
+local humanoid
 
--- Fungsi ambil HumanoidRootPart tiap respawn
-local function getRoot()
-	local character = player.Character or player.CharacterAdded:Wait()
-	return character:WaitForChild("HumanoidRootPart")
+-- Fungsi ambil root & humanoid tiap respawn
+local function setupChar()
+	local char = player.Character or player.CharacterAdded:Wait()
+	humanoidRootPart = char:WaitForChild("HumanoidRootPart")
+	humanoid = char:WaitForChild("Humanoid")
 end
 
-local humanoidRootPart = getRoot()
-player.CharacterAdded:Connect(function(char)
-	humanoidRootPart = char:WaitForChild("HumanoidRootPart")
+setupChar()
+player.CharacterAdded:Connect(function()
+	setupChar()
 	if flying then
 		bodyVelocity = Instance.new("BodyVelocity")
 		bodyVelocity.Velocity = Vector3.new(0,0,0)
@@ -104,9 +107,25 @@ end)
 local function setNoclip(state)
 	if player.Character then
 		for _, part in pairs(player.Character:GetDescendants()) do
-			if part:IsA("BasePart") and part.CanCollide ~= nil then
+			if part:IsA("BasePart") then
 				part.CanCollide = not state
 			end
+		end
+	end
+	if humanoid then
+		-- Bikin immortal saat fly
+		if state then
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+			humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+			humanoid.Health = math.huge
+		else
+			-- balikin normal
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
+			humanoid.Health = 100
 		end
 	end
 end
@@ -122,7 +141,6 @@ local function toggleFly()
 		bodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
 		bodyVelocity.Parent = humanoidRootPart
 
-		-- noclip aktif
 		RunService.Stepped:Connect(function()
 			if flying and player.Character then
 				setNoclip(true)
