@@ -1,6 +1,6 @@
 -- LocalScript @ StarterPlayerScripts
--- Versi Mobile: arah gerak pakai analog (MoveDirection), naik/turun pakai tombol GUI
--- Ada tombol Start/Stop, Minimize, Close
+-- Fly + Mobile control (joystick + tombol naik/turun)
+-- GUI: Start/Stop, Minimize, Close, Speed preset (x1 s/d x8), Noclip toggle
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,8 +9,10 @@ local player = Players.LocalPlayer
 -- ===== STATE =====
 local flying = false
 local minimized = false
-local speed = 60
-local verticalSpeed = 60
+local noclip = false
+local baseSpeed = 30
+local speed = baseSpeed
+local verticalSpeed = baseSpeed
 local accel = 10
 local currentVel = Vector3.zero
 local verticalInput = 0
@@ -40,11 +42,10 @@ end
 local gui = Instance.new("ScreenGui")
 gui.Name = "FlyMobileUI"
 gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.fromOffset(260, 120)
+frame.Size = UDim2.fromOffset(280, 160)
 frame.Position = UDim2.new(0, 20, 0, 120)
 frame.BackgroundColor3 = Color3.fromRGB(22,22,22)
 frame.BackgroundTransparency = 0.1
@@ -66,27 +67,21 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
 
 -- tombol minimize & close
-local btnMin = Instance.new("TextButton")
-btnMin.Size = UDim2.fromOffset(28, 24)
-btnMin.Position = UDim2.new(1, -64, 0, 6)
-btnMin.Text = "–"
-btnMin.Font = Enum.Font.GothamBold
-btnMin.TextSize = 18
-btnMin.BackgroundColor3 = Color3.fromRGB(50,50,50)
-btnMin.TextColor3 = Color3.fromRGB(255,255,255)
-btnMin.Parent = frame
-Instance.new("UICorner", btnMin).CornerRadius = UDim.new(0, 8)
-
-local btnClose = Instance.new("TextButton")
-btnClose.Size = UDim2.fromOffset(28, 24)
-btnClose.Position = UDim2.new(1, -32, 0, 6)
-btnClose.Text = "×"
-btnClose.Font = Enum.Font.GothamBold
-btnClose.TextSize = 18
-btnClose.BackgroundColor3 = Color3.fromRGB(120,40,40)
-btnClose.TextColor3 = Color3.fromRGB(255,255,255)
-btnClose.Parent = frame
-Instance.new("UICorner", btnClose).CornerRadius = UDim.new(0, 8)
+local function makeBtn(txt, pos, color)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.fromOffset(28, 24)
+	b.Position = pos
+	b.Text = txt
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 18
+	b.BackgroundColor3 = color
+	b.TextColor3 = Color3.fromRGB(255,255,255)
+	b.Parent = frame
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+	return b
+end
+local btnMin = makeBtn("–", UDim2.new(1, -64, 0, 6), Color3.fromRGB(50,50,50))
+local btnClose = makeBtn("×", UDim2.new(1, -32, 0, 6), Color3.fromRGB(120,40,40))
 
 -- tombol start/stop
 local btnToggle = Instance.new("TextButton")
@@ -100,42 +95,48 @@ btnToggle.TextColor3 = Color3.fromRGB(255,255,255)
 btnToggle.Parent = frame
 Instance.new("UICorner", btnToggle).CornerRadius = UDim.new(0, 10)
 
--- label speed
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(0, 110, 0, 20)
-speedLabel.Position = UDim2.new(0, 140, 0, 44)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "Speed: "..tostring(speed)
-speedLabel.Font = Enum.Font.Gotham
-speedLabel.TextSize = 14
-speedLabel.TextColor3 = Color3.fromRGB(220,220,220)
-speedLabel.Parent = frame
+-- Noclip button
+local btnNoclip = Instance.new("TextButton")
+btnNoclip.Size = UDim2.new(0, 110, 0, 36)
+btnNoclip.Position = UDim2.new(0, 140, 0, 48)
+btnNoclip.Text = "Noclip: OFF"
+btnNoclip.Font = Enum.Font.GothamBold
+btnNoclip.TextSize = 16
+btnNoclip.BackgroundColor3 = Color3.fromRGB(80,80,120)
+btnNoclip.TextColor3 = Color3.fromRGB(255,255,255)
+btnNoclip.Parent = frame
+Instance.new("UICorner", btnNoclip).CornerRadius = UDim.new(0, 10)
 
--- tombol speed -
-local btnSpeedDown = Instance.new("TextButton")
-btnSpeedDown.Size = UDim2.new(0, 36, 0, 28)
-btnSpeedDown.Position = UDim2.new(0, 140, 0, 66)
-btnSpeedDown.Text = "-10"
-btnSpeedDown.Font = Enum.Font.GothamBold
-btnSpeedDown.TextSize = 16
-btnSpeedDown.BackgroundColor3 = Color3.fromRGB(50,50,50)
-btnSpeedDown.TextColor3 = Color3.fromRGB(255,255,255)
-btnSpeedDown.Parent = frame
-Instance.new("UICorner", btnSpeedDown).CornerRadius = UDim.new(0, 8)
+-- Speed preset buttons
+local presetFrame = Instance.new("Frame")
+presetFrame.Size = UDim2.fromOffset(260, 60)
+presetFrame.Position = UDim2.new(0, 10, 0, 96)
+presetFrame.BackgroundTransparency = 1
+presetFrame.Parent = frame
 
--- tombol speed +
-local btnSpeedUp = Instance.new("TextButton")
-btnSpeedUp.Size = UDim2.new(0, 36, 0, 28)
-btnSpeedUp.Position = UDim2.new(0, 186, 0, 66)
-btnSpeedUp.Text = "+10"
-btnSpeedUp.Font = Enum.Font.GothamBold
-btnSpeedUp.TextSize = 16
-btnSpeedUp.BackgroundColor3 = Color3.fromRGB(50,50,50)
-btnSpeedUp.TextColor3 = Color3.fromRGB(255,255,255)
-btnSpeedUp.Parent = frame
-Instance.new("UICorner", btnSpeedUp).CornerRadius = UDim.new(0, 8)
+for i=1,8 do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.fromOffset(28, 28)
+	btn.Position = UDim2.new(0, (i-1)*32, 0, 0)
+	btn.Text = "x"..i
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.Parent = presetFrame
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
--- tombol naik/turun (mobile)
+	btn.MouseButton1Click:Connect(function()
+		speed = baseSpeed * i
+		verticalSpeed = speed
+		for _,b in ipairs(presetFrame:GetChildren()) do
+			if b:IsA("TextButton") then b.BackgroundColor3 = Color3.fromRGB(60,60,60) end
+		end
+		btn.BackgroundColor3 = Color3.fromRGB(40,140,80)
+	end)
+end
+
+-- tombol naik/turun
 local btnUp = Instance.new("TextButton")
 btnUp.Size = UDim2.fromOffset(60, 60)
 btnUp.Position = UDim2.new(1, -80, 1, -160)
@@ -159,41 +160,27 @@ btnDown.Parent = gui
 Instance.new("UICorner", btnDown).CornerRadius = UDim.new(1, 0)
 
 -- ===== GUI LOGIC =====
-local function updateSpeedLabel()
-	speedLabel.Text = "Speed: "..tostring(speed)
-end
-
-btnSpeedDown.MouseButton1Click:Connect(function()
-	speed = math.clamp(speed - 10, 10, 300)
-	verticalSpeed = speed
-	updateSpeedLabel()
-end)
-
-btnSpeedUp.MouseButton1Click:Connect(function()
-	speed = math.clamp(speed + 10, 10, 300)
-	verticalSpeed = speed
-	updateSpeedLabel()
-end)
-
 btnToggle.MouseButton1Click:Connect(function()
 	flying = not flying
 	btnToggle.Text = flying and "Stop" or "Start"
 	btnToggle.BackgroundColor3 = flying and Color3.fromRGB(180,60,60) or Color3.fromRGB(40,140,80)
 	local _, _, hum = getChar()
-	if flying then
-		hum:ChangeState(Enum.HumanoidStateType.Physics)
-	else
-		hum:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
-	end
+	if flying then hum:ChangeState(Enum.HumanoidStateType.Physics)
+	else hum:ChangeState(Enum.HumanoidStateType.RunningNoPhysics) end
+end)
+
+btnNoclip.MouseButton1Click:Connect(function()
+	noclip = not noclip
+	btnNoclip.Text = noclip and "Noclip: ON" or "Noclip: OFF"
+	btnNoclip.BackgroundColor3 = noclip and Color3.fromRGB(200,80,80) or Color3.fromRGB(80,80,120)
 end)
 
 btnMin.MouseButton1Click:Connect(function()
 	minimized = not minimized
 	btnToggle.Visible = not minimized
-	speedLabel.Visible = not minimized
-	btnSpeedDown.Visible = not minimized
-	btnSpeedUp.Visible = not minimized
-	frame.Size = minimized and UDim2.fromOffset(260, 36) or UDim2.fromOffset(260, 120)
+	btnNoclip.Visible = not minimized
+	presetFrame.Visible = not minimized
+	frame.Size = minimized and UDim2.fromOffset(280, 36) or UDim2.fromOffset(280, 160)
 end)
 
 btnClose.MouseButton1Click:Connect(function()
@@ -203,7 +190,6 @@ end)
 
 btnUp.MouseButton1Down:Connect(function() verticalInput = 1 end)
 btnUp.MouseButton1Up:Connect(function() verticalInput = 0 end)
-
 btnDown.MouseButton1Down:Connect(function() verticalInput = -1 end)
 btnDown.MouseButton1Up:Connect(function() verticalInput = 0 end)
 
@@ -213,9 +199,8 @@ RunService.RenderStepped:Connect(function(dt)
 	if flying then
 		ensureAlign(hrp)
 		local cam = workspace.CurrentCamera
-		local moveDir = hum.MoveDirection -- otomatis sesuai analog
+		local moveDir = hum.MoveDirection
 		local moveH = Vector3.new(moveDir.X, 0, moveDir.Z)
-
 		local moveV = Vector3.new(0, verticalInput, 0)
 
 		local desired = Vector3.zero
@@ -229,6 +214,13 @@ RunService.RenderStepped:Connect(function(dt)
 		align.CFrame = CFrame.Angles(0, y, 0)
 
 		hum.PlatformStand = true
+
+		-- Noclip: matiin CanCollide semua part di character
+		if noclip then
+			for _,v in pairs(char:GetDescendants()) do
+				if v:IsA("BasePart") then v.CanCollide = false end
+			end
+		end
 	else
 		if hum.PlatformStand then hum.PlatformStand = false end
 		currentVel = currentVel:Lerp(Vector3.zero, math.clamp(accel * dt, 0, 1))
@@ -241,9 +233,5 @@ player.CharacterAdded:Connect(function()
 	flying = false
 	currentVel = Vector3.zero
 	if align then align:Destroy() align = nil end
-	if gui.Parent == nil then
-		gui.Parent = player:WaitForChild("PlayerGui")
-	end
+	if gui.Parent == nil then gui.Parent = player:WaitForChild("PlayerGui") end
 end)
-
-updateSpeedLabel()
