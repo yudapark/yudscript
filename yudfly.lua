@@ -26,7 +26,6 @@ local currentTheme = 1
 local SPEED_PRESETS = {2, 4, 6, 8}
 local espAdornments = {}
 local selectedPlayer = nil
-local isMobile = UIS.TouchEnabled
 
 -- Setup Char
 local function setupChar()
@@ -43,7 +42,7 @@ screenGui.Name = "YudaHub"
 screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 300, 0, 550) -- Increased width for better player selection
+mainFrame.Size = UDim2.new(0, 260, 0, 550) -- Adjusted for new buttons
 mainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
@@ -222,48 +221,6 @@ themeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 themeBtn.Font = Enum.Font.GothamBold
 themeBtn.TextSize = 14
 
--- Mobile Fly Joystick
-local joystickFrame = Instance.new("Frame", screenGui)
-joystickFrame.Size = UDim2.new(0, 150, 0, 150)
-joystickFrame.Position = UDim2.new(0.1, 0, 0.7, 0)
-joystickFrame.BackgroundTransparency = 0.5
-joystickFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-joystickFrame.Visible = false
-joystickFrame.Active = true
-
-local joystickKnob = Instance.new("Frame", joystickFrame)
-joystickKnob.Size = UDim2.new(0, 50, 0, 50)
-joystickKnob.Position = UDim2.new(0.5, -25, 0.5, -25)
-joystickKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-joystickKnob.BackgroundTransparency = 0.5
-
-local touchId = nil
-local centerPos = Vector2.new(75, 75)
-local maxDist = 75
-
-joystickFrame.TouchBegan:Connect(function(input)
-    if touchId == nil then
-        touchId = input.UserInputId
-        joystickKnob.Position = UDim2.new(0.5, -25, 0.5, -25)
-    end
-end)
-
-joystickFrame.TouchMoved:Connect(function(input)
-    if input.UserInputId == touchId then
-        local pos = Vector2.new(input.Position.X - joystickFrame.AbsolutePosition.X, input.Position.Y - joystickFrame.AbsolutePosition.Y)
-        local dir = (pos - centerPos).Unit
-        local dist = math.min((pos - centerPos).Magnitude, maxDist)
-        joystickKnob.Position = UDim2.new(0.5 + (dir.X * dist / joystickFrame.AbsoluteSize.X), -25, 0.5 + (dir.Y * dist / joystickFrame.AbsoluteSize.Y), -25)
-    end
-end)
-
-joystickFrame.TouchEnded:Connect(function(input)
-    if input.UserInputId == touchId then
-        touchId = nil
-        joystickKnob.Position = UDim2.new(0.5, -25, 0.5, -25)
-    end
-end)
-
 -- Update Speed Label
 local function updateSpeedLabel()
     speedLabel.Text = "⚡ Speed: x" .. tostring(currentSpeedMult)
@@ -350,12 +307,8 @@ local function toggleFly()
         bodyVelocity = Instance.new("BodyVelocity")
         bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
         bodyVelocity.Parent = rootPart
-        if isMobile then
-            joystickFrame.Visible = true
-        end
     else
         if bodyVelocity then bodyVelocity:Destroy() end
-        joystickFrame.Visible = false
     end
     flyBtn.Text = "✈️ Fly [F] : " .. (FLY_ENABLED and "ON" or "OFF")
 end
@@ -422,7 +375,7 @@ local minimized = false
 minBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
     content.Visible = not minimized
-    mainFrame.Size = minimized and UDim2.new(0, 300, 0, 35) or UDim2.new(0, 300, 0, 550)
+    mainFrame.Size = minimized and UDim2.new(0, 260, 0, 35) or UDim2.new(0, 260, 0, 550)
 end)
 
 -- Keyboard Shortcuts
@@ -459,21 +412,12 @@ RunService.Heartbeat:Connect(function()
         local camCF = workspace.CurrentCamera.CFrame
         local look, right = camCF.LookVector, camCF.RightVector
 
-        if isMobile and touchId then
-            local knobPos = Vector2.new(joystickKnob.AbsolutePosition.X + 25, joystickKnob.AbsolutePosition.Y + 25) - joystickFrame.AbsolutePosition
-            local dir = (knobPos - centerPos) / maxDist
-            if dir.Magnitude > 1 then dir = dir.Unit end
-            move = Vector3.new(dir.X, 0, dir.Y) -- Map to XZ plane
-            move = camCF:VectorToWorldSpace(move) -- Align with camera
-            move = Vector3.new(move.X, 0, move.Z).Unit -- Ignore Y for horizontal
-        else
-            if UIS:IsKeyDown(Enum.KeyCode.W) then move += look end
-            if UIS:IsKeyDown(Enum.KeyCode.S) then move -= look end
-            if UIS:IsKeyDown(Enum.KeyCode.A) then move -= right end
-            if UIS:IsKeyDown(Enum.KeyCode.D) then move += right end
-            if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
-            if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0, 1, 0) end
-        end
+        if UIS:IsKeyDown(Enum.KeyCode.W) then move += look end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then move -= look end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then move -= right end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then move += right end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0, 1, 0) end
 
         if move.Magnitude > 0 then
             bodyVelocity.Velocity = move.Unit * (BASE_FLY_SPEED * currentSpeedMult)
