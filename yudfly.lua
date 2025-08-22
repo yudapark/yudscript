@@ -1,5 +1,6 @@
 -- 🔥 JEBEK.ID 🔥
 -- by yuda
+-- Updated version: Added God Mode, ESP for players, Teleport Left/Right, and improved UI with more options.
 
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
@@ -8,6 +9,7 @@ local player = Players.LocalPlayer
 
 -- Flags
 local NOCLIP_ENABLED, FLY_ENABLED, SPEED_ENABLED, INFJUMP_ENABLED, JUMPBOOST_ENABLED = false, false, false, false, false
+local GODMODE_ENABLED, ESP_ENABLED = false, false
 
 -- Settings
 local BASE_FLY_SPEED = 50
@@ -17,6 +19,7 @@ local TELEPORT_DIST = 15
 
 local bodyVelocity
 local humanoid, rootPart
+local espHighlights = {}  -- Table to store ESP highlights
 
 -- Setup Char
 local function setupChar()
@@ -33,7 +36,7 @@ screenGui.Name = "YudaHub"
 screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 260, 0, 340)
+mainFrame.Size = UDim2.new(0, 260, 0, 400)  -- Increased height for more buttons
 mainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 mainFrame.BorderSizePixel = 0
@@ -46,7 +49,7 @@ UIStroke.Thickness = 2
 
 local title = Instance.new("TextLabel", mainFrame)
 title.Size = UDim2.new(1, -60, 0, 30)
-title.Text = "🔥 YUDA HUB 🔥"
+title.Text = "🔥 YUDA HUB 🔥 (Updated)"
 title.TextColor3 = Color3.fromRGB(0,200,255)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 16
@@ -101,8 +104,12 @@ local noclipBtn = makeBtn("🚪 NoClip [B]")
 local speedBtn = makeBtn("⚡ Speed Hack [G]")
 local infJumpBtn = makeBtn("🌀 Infinite Jump [H]")
 local jumpBoostBtn = makeBtn("⬆️ Jump Boost [J]")
+local godModeBtn = makeBtn("🛡️ God Mode [K]")  -- New: God Mode
+local espBtn = makeBtn("👀 ESP [L]")  -- New: ESP
 local tpFBtn = makeBtn("➡️ Teleport Forward [↑]")
 local tpBBtn = makeBtn("⬅️ Teleport Backward [↓]")
+local tpLBtn = makeBtn("⬆️ Teleport Left [←]")  -- New: Teleport Left
+local tpRBtn = makeBtn("⬇️ Teleport Right [→]")  -- New: Teleport Right
 
 -- Speed Control Frame
 local speedFrame = Instance.new("Frame", content)
@@ -189,17 +196,69 @@ local function toggleJumpBoost()
 	jumpBoostBtn.Text = "⬆️ Jump Boost [J] : " .. (JUMPBOOST_ENABLED and "ON" or "OFF")
 end
 
+local function toggleGodMode()
+	GODMODE_ENABLED = not GODMODE_ENABLED
+	godModeBtn.Text = "🛡️ God Mode [K] : " .. (GODMODE_ENABLED and "ON" or "OFF")
+end
+
+local function toggleESP()
+	ESP_ENABLED = not ESP_ENABLED
+	if ESP_ENABLED then
+		for _, p in ipairs(Players:GetPlayers()) do
+			if p ~= player and p.Character then
+				local highlight = Instance.new("Highlight")
+				highlight.Parent = p.Character
+				highlight.FillColor = Color3.fromRGB(255, 0, 0)  -- Red for enemies
+				highlight.OutlineColor = Color3.fromRGB(255, 255, 0)  -- Yellow outline
+				espHighlights[p] = highlight
+			end
+		end
+	else
+		for _, highlight in pairs(espHighlights) do
+			highlight:Destroy()
+		end
+		espHighlights = {}
+	end
+	espBtn.Text = "👀 ESP [L] : " .. (ESP_ENABLED and "ON" or "OFF")
+end
+
+-- Handle new players for ESP
+Players.PlayerAdded:Connect(function(p)
+	if ESP_ENABLED and p ~= player and p.Character then
+		local highlight = Instance.new("Highlight")
+		highlight.Parent = p.Character
+		highlight.FillColor = Color3.fromRGB(255, 0, 0)
+		highlight.OutlineColor = Color3.fromRGB(255, 255, 0)
+		espHighlights[p] = highlight
+	end
+end)
+
+Players.PlayerRemoving:Connect(function(p)
+	if espHighlights[p] then
+		espHighlights[p]:Destroy()
+		espHighlights[p] = nil
+	end
+end)
+
 -- Bind Buttons
 flyBtn.MouseButton1Click:Connect(toggleFly)
 noclipBtn.MouseButton1Click:Connect(toggleNoClip)
 speedBtn.MouseButton1Click:Connect(toggleSpeed)
 infJumpBtn.MouseButton1Click:Connect(toggleInfJump)
 jumpBoostBtn.MouseButton1Click:Connect(toggleJumpBoost)
+godModeBtn.MouseButton1Click:Connect(toggleGodMode)
+espBtn.MouseButton1Click:Connect(toggleESP)
 tpFBtn.MouseButton1Click:Connect(function()
 	if rootPart then rootPart.CFrame = rootPart.CFrame + rootPart.CFrame.LookVector * TELEPORT_DIST end
 end)
 tpBBtn.MouseButton1Click:Connect(function()
 	if rootPart then rootPart.CFrame = rootPart.CFrame - rootPart.CFrame.LookVector * TELEPORT_DIST end
+end)
+tpLBtn.MouseButton1Click:Connect(function()
+	if rootPart then rootPart.CFrame = rootPart.CFrame - rootPart.CFrame.RightVector * TELEPORT_DIST end
+end)
+tpRBtn.MouseButton1Click:Connect(function()
+	if rootPart then rootPart.CFrame = rootPart.CFrame + rootPart.CFrame.RightVector * TELEPORT_DIST end
 end)
 
 -- Close/Minimize
@@ -208,7 +267,7 @@ local minimized = false
 minBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
 	content.Visible = not minimized
-	mainFrame.Size = minimized and UDim2.new(0,260,0,35) or UDim2.new(0,260,0,340)
+	mainFrame.Size = minimized and UDim2.new(0,260,0,35) or UDim2.new(0,260,0,400)
 end)
 
 -- Keyboard Shortcuts
@@ -219,8 +278,12 @@ UIS.InputBegan:Connect(function(i,g)
 	elseif i.KeyCode == Enum.KeyCode.G then toggleSpeed()
 	elseif i.KeyCode == Enum.KeyCode.H then toggleInfJump()
 	elseif i.KeyCode == Enum.KeyCode.J then toggleJumpBoost()
+	elseif i.KeyCode == Enum.KeyCode.K then toggleGodMode()
+	elseif i.KeyCode == Enum.KeyCode.L then toggleESP()
 	elseif i.KeyCode == Enum.KeyCode.Up then if rootPart then rootPart.CFrame = rootPart.CFrame + rootPart.CFrame.LookVector * TELEPORT_DIST end
 	elseif i.KeyCode == Enum.KeyCode.Down then if rootPart then rootPart.CFrame = rootPart.CFrame - rootPart.CFrame.LookVector * TELEPORT_DIST end
+	elseif i.KeyCode == Enum.KeyCode.Left then if rootPart then rootPart.CFrame = rootPart.CFrame - rootPart.CFrame.RightVector * TELEPORT_DIST end
+	elseif i.KeyCode == Enum.KeyCode.Right then if rootPart then rootPart.CFrame = rootPart.CFrame + rootPart.CFrame.RightVector * TELEPORT_DIST end
 	end
 end)
 
@@ -255,7 +318,6 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
-
 -- NoClip
 RunService.Stepped:Connect(function()
 	if NOCLIP_ENABLED and player.Character then
@@ -273,5 +335,12 @@ RunService.RenderStepped:Connect(function()
 		else
 			humanoid.WalkSpeed = 16
 		end
+	end
+end)
+
+-- God Mode Handler
+RunService.Heartbeat:Connect(function()
+	if GODMODE_ENABLED and humanoid then
+		humanoid.Health = humanoid.MaxHealth
 	end
 end)
