@@ -1,5 +1,5 @@
 -- LocalScript di StarterGui
--- Fly GUI lengkap: noclip, speed multiplier, draggable GUI, minimize/close, persist, full ghost (no death on fall/collision)
+-- Fly GUI: Full fitur + animasi normal + noclip + immortal + first person precision
 
 local player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
@@ -103,7 +103,7 @@ closeButton.MouseButton1Click:Connect(function()
 	screenGui.Enabled = false
 end)
 
--- Fungsi Noclip
+-- Fungsi Noclip + Immortal
 local function setNoclip(state)
 	if player.Character then
 		for _, part in pairs(player.Character:GetDescendants()) do
@@ -113,7 +113,6 @@ local function setNoclip(state)
 		end
 	end
 	if humanoid then
-		-- Bikin immortal saat fly
 		if state then
 			humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
 			humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
@@ -121,7 +120,6 @@ local function setNoclip(state)
 			humanoid:ChangeState(Enum.HumanoidStateType.Physics)
 			humanoid.Health = math.huge
 		else
-			-- balikin normal
 			humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
 			humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
 			humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
@@ -155,35 +153,49 @@ local function toggleFly()
 end
 flyButton.MouseButton1Click:Connect(toggleFly)
 
--- Kontrol Fly
+-- Kontrol Fly (support first person precision)
 RunService.Heartbeat:Connect(function()
-	if flying and bodyVelocity and humanoidRootPart then
+	if flying and humanoidRootPart and humanoid then
 		local moveDir = Vector3.new(0,0,0)
 		local camCF = workspace.CurrentCamera.CFrame
+		local camLook = camCF.LookVector
+		local camRight = camCF.RightVector
 
-		if UIS:IsKeyDown(Enum.KeyCode.W) then
-			moveDir = moveDir + camCF.LookVector
-		end
-		if UIS:IsKeyDown(Enum.KeyCode.S) then
-			moveDir = moveDir - camCF.LookVector
-		end
-		if UIS:IsKeyDown(Enum.KeyCode.A) then
-			moveDir = moveDir - camCF.RightVector
-		end
-		if UIS:IsKeyDown(Enum.KeyCode.D) then
-			moveDir = moveDir + camCF.RightVector
-		end
-		if UIS:IsKeyDown(Enum.KeyCode.Space) then
-			moveDir = moveDir + Vector3.new(0,1,0)
-		end
-		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
-			moveDir = moveDir + Vector3.new(0,-1,0)
+		local isFirstPerson = (workspace.CurrentCamera.CFrame.Position - player.Character.Head.Position).Magnitude < 1
+
+		if isFirstPerson then
+			-- Kontrol presisi penuh sesuai kamera
+			if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camLook end
+			if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camLook end
+			if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camRight end
+			if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camRight end
+			if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + camCF.UpVector end
+			if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - camCF.UpVector end
+		else
+			-- Mode normal (third person)
+			if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camLook end
+			if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camLook end
+			if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camRight end
+			if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camRight end
+			if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
+			if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir + Vector3.new(0,-1,0) end
 		end
 
 		if moveDir.Magnitude > 0 then
-			bodyVelocity.Velocity = moveDir.Unit * flySpeed * currentMultiplier
+			moveDir = moveDir.Unit * flySpeed * currentMultiplier
+			if not bodyVelocity or not bodyVelocity.Parent then
+				bodyVelocity = Instance.new("BodyVelocity")
+				bodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
+				bodyVelocity.Velocity = Vector3.new(0,0,0)
+				bodyVelocity.Parent = humanoidRootPart
+			end
+			bodyVelocity.Velocity = moveDir
+			humanoid:Move((camLook * moveDir.Z) + (camRight * moveDir.X))
 		else
-			bodyVelocity.Velocity = Vector3.new(0,0,0)
+			if bodyVelocity then bodyVelocity.Velocity = Vector3.new(0,0,0) end
+			humanoid:Move(Vector3.new(0,0,0))
 		end
+
+		humanoid.PlatformStand = false
 	end
 end)
