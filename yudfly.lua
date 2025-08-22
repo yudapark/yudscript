@@ -1,6 +1,5 @@
--- YUDA HUB GUI (Interactive)
--- Features: Fly, NoClip, Speed, InfJump, JumpBoost, Teleport
--- Controls: Click buttons OR use keybinds
+-- 🔥 YUDA HUB FINAL 🔥
+-- by yudapark
 
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
@@ -11,8 +10,8 @@ local player = Players.LocalPlayer
 local NOCLIP_ENABLED, FLY_ENABLED, SPEED_ENABLED, INFJUMP_ENABLED, JUMPBOOST_ENABLED = false, false, false, false, false
 
 -- Settings
-local FLY_SPEED = 50
-local SPEED_MULTIPLIER = 8
+local BASE_FLY_SPEED = 50
+local currentSpeedMult = 1
 local JUMP_POWER = 100
 local TELEPORT_DIST = 15
 
@@ -34,7 +33,7 @@ screenGui.Name = "YudaHub"
 screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 240, 0, 280)
+mainFrame.Size = UDim2.new(0, 260, 0, 340)
 mainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 mainFrame.BorderSizePixel = 0
@@ -99,11 +98,62 @@ end
 
 local flyBtn = makeBtn("✈️ Fly [F]")
 local noclipBtn = makeBtn("🚪 NoClip [B]")
-local speedBtn = makeBtn("⚡ Speed [G]")
+local speedBtn = makeBtn("⚡ Speed Hack [G]")
 local infJumpBtn = makeBtn("🌀 Infinite Jump [H]")
 local jumpBoostBtn = makeBtn("⬆️ Jump Boost [J]")
 local tpFBtn = makeBtn("➡️ Teleport Forward [↑]")
 local tpBBtn = makeBtn("⬅️ Teleport Backward [↓]")
+
+-- Speed Control Frame
+local speedFrame = Instance.new("Frame", content)
+speedFrame.Size = UDim2.new(1,0,0,30)
+speedFrame.BackgroundTransparency = 1
+
+local minusBtn = Instance.new("TextButton", speedFrame)
+minusBtn.Size = UDim2.new(0,40,1,0)
+minusBtn.Text = "-"
+minusBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+minusBtn.TextColor3 = Color3.fromRGB(255,255,255)
+minusBtn.Font = Enum.Font.GothamBold
+minusBtn.TextSize = 18
+
+local speedLabel = Instance.new("TextLabel", speedFrame)
+speedLabel.Size = UDim2.new(0.6,0,1,0)
+speedLabel.Position = UDim2.new(0.2,0,0,0)
+speedLabel.Text = "⚡ Speed: x1"
+speedLabel.TextColor3 = Color3.fromRGB(0,200,255)
+speedLabel.Font = Enum.Font.GothamBold
+speedLabel.TextSize = 14
+speedLabel.BackgroundTransparency = 1
+
+local plusBtn = Instance.new("TextButton", speedFrame)
+plusBtn.Size = UDim2.new(0,40,1,0)
+plusBtn.Position = UDim2.new(1,-40,0,0)
+plusBtn.Text = "+"
+plusBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+plusBtn.TextColor3 = Color3.fromRGB(255,255,255)
+plusBtn.Font = Enum.Font.GothamBold
+plusBtn.TextSize = 18
+
+speedFrame.Parent = content
+
+local function updateSpeedLabel()
+	speedLabel.Text = "⚡ Speed: x" .. tostring(currentSpeedMult)
+end
+
+plusBtn.MouseButton1Click:Connect(function()
+	if currentSpeedMult < 8 then
+		currentSpeedMult += 1
+		updateSpeedLabel()
+	end
+end)
+
+minusBtn.MouseButton1Click:Connect(function()
+	if currentSpeedMult > 1 then
+		currentSpeedMult -= 1
+		updateSpeedLabel()
+	end
+end)
 
 -- Toggle Functions
 local function toggleFly()
@@ -125,7 +175,7 @@ end
 
 local function toggleSpeed()
 	SPEED_ENABLED = not SPEED_ENABLED
-	speedBtn.Text = "⚡ Speed [G] : " .. (SPEED_ENABLED and "ON" or "OFF")
+	speedBtn.Text = "⚡ Speed Hack [G] : " .. (SPEED_ENABLED and "ON" or "OFF")
 end
 
 local function toggleInfJump()
@@ -158,7 +208,7 @@ local minimized = false
 minBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
 	content.Visible = not minimized
-	mainFrame.Size = minimized and UDim2.new(0,240,0,35) or UDim2.new(0,240,0,280)
+	mainFrame.Size = minimized and UDim2.new(0,260,0,35) or UDim2.new(0,260,0,340)
 end)
 
 -- Keyboard Shortcuts
@@ -174,15 +224,16 @@ UIS.InputBegan:Connect(function(i,g)
 	end
 end)
 
--- Movement Handlers
+-- Infinite Jump
 UIS.JumpRequest:Connect(function()
 	if INFJUMP_ENABLED and humanoid then
 		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 	end
 end)
 
+-- Fly Handler
 RunService.Heartbeat:Connect(function()
-	if FLY_ENABLED and rootPart and humanoid then
+	if FLY_ENABLED and rootPart and humanoid and bodyVelocity then
 		local move = Vector3.new()
 		local camCF = workspace.CurrentCamera.CFrame
 		local look, right = camCF.LookVector, camCF.RightVector
@@ -193,13 +244,14 @@ RunService.Heartbeat:Connect(function()
 		if UIS:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
 		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move = move - Vector3.new(0,1,0) end
 		if move.Magnitude > 0 then
-			bodyVelocity.Velocity = move.Unit * FLY_SPEED
+			bodyVelocity.Velocity = move.Unit * (BASE_FLY_SPEED * currentSpeedMult)
 		else
 			bodyVelocity.Velocity = Vector3.new(0,0,0)
 		end
 	end
 end)
 
+-- NoClip
 RunService.Stepped:Connect(function()
 	if NOCLIP_ENABLED and player.Character then
 		for _, part in ipairs(player.Character:GetDescendants()) do
@@ -208,10 +260,13 @@ RunService.Stepped:Connect(function()
 	end
 end)
 
+-- Speed Hack
 RunService.RenderStepped:Connect(function()
-	if SPEED_ENABLED and humanoid then
-		humanoid.WalkSpeed = 16 * SPEED_MULTIPLIER
-	else
-		humanoid.WalkSpeed = 16
+	if humanoid then
+		if SPEED_ENABLED then
+			humanoid.WalkSpeed = 16 * currentSpeedMult
+		else
+			humanoid.WalkSpeed = 16
+		end
 	end
 end)
