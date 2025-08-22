@@ -405,26 +405,44 @@ UIS.JumpRequest:Connect(function()
     end
 end)
 
--- Fly Handler (Mobile + PC dengan arah kamera)
+-- Fly Handler (PC + Mobile Sync Kamera)
 RunService.Heartbeat:Connect(function()
     if FLY_ENABLED and rootPart and humanoid and bodyVelocity then
-        local move = humanoid.MoveDirection
         local camCF = workspace.CurrentCamera.CFrame
         local look = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
         local right = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
 
         local moveDir = Vector3.zero
 
-        -- analog / WASD mapping
-        if move.Magnitude > 0 then
-            moveDir = (look * move.Z + right * move.X) -- maju mundur & kanan kiri sesuai kamera
+        -- 📌 MODE PC: WASD
+        if UIS.KeyboardEnabled then
+            if UIS:IsKeyDown(Enum.KeyCode.W) then
+                moveDir += look
+            end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then
+                moveDir -= look
+            end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then
+                moveDir -= right
+            end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then
+                moveDir += right
+            end
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then
+                moveDir += Vector3.new(0, 1, 0)
+            end
+            if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
+                moveDir -= Vector3.new(0, 1, 0)
+            end
         end
 
-        -- naik turun
-        if UIS:IsKeyDown(Enum.KeyCode.Space) then
-            moveDir += Vector3.new(0, 1, 0)
-        elseif UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
-            moveDir += Vector3.new(0, -1, 0)
+        -- 📌 MODE MOBILE: Analog
+        if UIS.TouchEnabled then
+            local move = humanoid.MoveDirection
+            if move.Magnitude > 0 then
+                -- analog diproyeksikan ke arah kamera
+                moveDir += (look * move.Z + right * move.X)
+            end
         end
 
         -- apply velocity
@@ -436,6 +454,7 @@ RunService.Heartbeat:Connect(function()
         end
     end
 end)
+
 
 
 
