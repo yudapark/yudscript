@@ -405,31 +405,38 @@ UIS.JumpRequest:Connect(function()
     end
 end)
 
--- Fly Handler (Mobile + PC)
+-- Fly Handler (Mobile + PC dengan arah kamera)
 RunService.Heartbeat:Connect(function()
     if FLY_ENABLED and rootPart and humanoid and bodyVelocity then
-        local move = humanoid.MoveDirection -- ambil arah analog (mobile) atau WASD (PC)
+        local move = humanoid.MoveDirection
         local camCF = workspace.CurrentCamera.CFrame
-        local look, right = camCF.LookVector, camCF.RightVector
+        local look = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
+        local right = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
 
-        -- kalau analog dipakai, gerak sesuai MoveDirection + arah kamera
+        local moveDir = Vector3.zero
+
+        -- analog / WASD mapping
         if move.Magnitude > 0 then
-            local moveDir = (look * move.Z + right * move.X + Vector3.new(0, move.Y, 0))
+            moveDir = (look * move.Z + right * move.X) -- maju mundur & kanan kiri sesuai kamera
+        end
+
+        -- naik turun
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then
+            moveDir += Vector3.new(0, 1, 0)
+        elseif UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
+            moveDir += Vector3.new(0, -1, 0)
+        end
+
+        -- apply velocity
+        if moveDir.Magnitude > 0 then
             bodyVelocity.Velocity = moveDir.Unit * (BASE_FLY_SPEED * currentSpeedMult)
         else
-            -- biar nggak licin kalau nggak ada input
             bodyVelocity.Velocity = Vector3.zero
             rootPart.AssemblyLinearVelocity = Vector3.zero
         end
-
-        -- kontrol tambahan untuk PC
-        if UIS:IsKeyDown(Enum.KeyCode.Space) then
-            bodyVelocity.Velocity += Vector3.new(0, BASE_FLY_SPEED * currentSpeedMult, 0)
-        elseif UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
-            bodyVelocity.Velocity += Vector3.new(0, -BASE_FLY_SPEED * currentSpeedMult, 0)
-        end
     end
 end)
+
 
 
 -- NoClip
