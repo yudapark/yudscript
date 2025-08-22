@@ -1,5 +1,5 @@
--- 🔥 YUDA HUB FINAL 🔥
--- by yudapark
+-- 🔥 JEBEK.ID 🔥
+-- by yuda
 
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
