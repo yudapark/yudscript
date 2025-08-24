@@ -24,7 +24,7 @@ UICorner.CornerRadius = UDim.new(0, 12)
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0.4, 0)
-Title.Text = "🔥 Anti AFK 🔥"
+Title.Text = "🔥 Anti AFK JEBEK GACOR 🔥"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.BackgroundTransparency = 1
 Title.Font = Enum.Font.GothamBold
