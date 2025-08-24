@@ -326,70 +326,20 @@ player.CharacterAdded:Connect(function()
 	if gui.Parent == nil then gui.Parent = player:WaitForChild("PlayerGui") end
 end)
 
--- ===== VERTICAL SLIDER =====
-local sliderFrame = Instance.new("Frame")
-sliderFrame.Size = UDim2.fromOffset(40, 200)
-sliderFrame.Position = UDim2.new(1, -60, 0.5, -100)
-sliderFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-sliderFrame.BorderSizePixel = 0
-sliderFrame.Parent = gui
-Instance.new("UICorner", sliderFrame).CornerRadius = UDim.new(0,8)
+-- Buat container untuk tombol naik/turun
+local moveFrame = Instance.new("Frame")
+moveFrame.Size = UDim2.fromOffset(70, 140)
+moveFrame.Position = UDim2.new(1,-90,1,-200) -- posisi awal (kanan bawah)
+moveFrame.BackgroundTransparency = 1
+moveFrame.Active = true
+moveFrame.Draggable = true
+moveFrame.Parent = gui
 
-local sliderHandle = Instance.new("Frame")
-sliderHandle.Size = UDim2.fromOffset(36, 20)
-sliderHandle.Position = UDim2.new(0.5, -18, 0.5, -10)
-sliderHandle.BackgroundColor3 = Color3.fromRGB(80,150,220)
-sliderHandle.BorderSizePixel = 0
-sliderHandle.Active = true
-sliderHandle.Draggable = true
-sliderHandle.Parent = sliderFrame
-Instance.new("UICorner", sliderHandle).CornerRadius = UDim.new(0,6)
+-- Tombol Naik
+local btnUp = makeBtn(moveFrame,"↑",UDim2.fromOffset(60,60),UDim2.new(0,5,0,0),Color3.fromRGB(40,120,200))
+btnUp.TextSize = 28
 
-local targetAltitude = 0
-local maxAltitude = 50 -- max naik
-local minAltitude = -50 -- max turun
+-- Tombol Turun
+local btnDown = makeBtn(moveFrame,"↓",UDim2.fromOffset(60,60),UDim2.new(0,5,0,70),Color3.fromRGB(200,80,40))
+btnDown.TextSize = 28
 
-sliderHandle.Changed:Connect(function(prop)
-	if prop == "Position" then
-		local relY = math.clamp(sliderHandle.Position.Y.Scale, 0, 1)
-		-- convert ke range -50 s/d +50
-		targetAltitude = minAltitude + (1 - relY) * (maxAltitude - minAltitude)
-	end
-end)
-
--- ===== UPDATE FLY LOOP =====
-RunService.RenderStepped:Connect(function(dt)
-	local char, hrp, hum = getChar()
-	if flying then
-		ensureAlign(hrp)
-		local cam = workspace.CurrentCamera
-		local moveDir = hum.MoveDirection
-		local moveH = Vector3.new(moveDir.X, 0, moveDir.Z)
-
-		local desired = Vector3.zero
-		if moveH.Magnitude > 0 then desired += moveH.Unit * speed end
-
-		-- Smooth ke targetAltitude
-		local currentY = hrp.Position.Y
-		local goalY = (player.Character.HumanoidRootPart.Position.Y + targetAltitude)
-		local diffY = goalY - currentY
-		desired += Vector3.new(0, diffY, 0)
-
-		currentVel = currentVel:Lerp(desired, math.clamp(accel * dt, 0, 1))
-		hrp.AssemblyLinearVelocity = currentVel
-
-		local _, y, _ = cam.CFrame:ToOrientation()
-		align.CFrame = CFrame.Angles(0, y, 0)
-
-		hum.PlatformStand = true
-		if noclip then
-			for _,v in pairs(char:GetDescendants()) do
-				if v:IsA("BasePart") then v.CanCollide = false end
-			end
-		end
-	else
-		if hum.PlatformStand then hum.PlatformStand = false end
-		currentVel = currentVel:Lerp(Vector3.zero, math.clamp(accel * dt, 0, 1))
-		if align then align:Destroy() align = nil end
-	end
-end)
