@@ -232,6 +232,23 @@ Players.PlayerAdded:Connect(refreshPlayerList)
 Players.PlayerRemoving:Connect(refreshPlayerList)
 refreshPlayerList()
 
+-- Buat container untuk tombol naik/turun
+local moveFrame = Instance.new("Frame")
+moveFrame.Size = UDim2.fromOffset(70, 140)
+moveFrame.Position = UDim2.new(1,-90,1,-200) -- posisi awal (kanan bawah)
+moveFrame.BackgroundTransparency = 1
+moveFrame.Active = true
+moveFrame.Draggable = true
+moveFrame.Parent = gui
+
+-- Tombol Naik
+local btnUp = makeBtn(moveFrame,"↑",UDim2.fromOffset(60,60),UDim2.new(0,5,0,0),Color3.fromRGB(40,120,200))
+btnUp.TextSize = 28
+
+-- Tombol Turun
+local btnDown = makeBtn(moveFrame,"↓",UDim2.fromOffset(60,60),UDim2.new(0,5,0,70),Color3.fromRGB(200,80,40))
+btnDown.TextSize = 28
+
 -- ===== LOGIC =====
 btnToggle.MouseButton1Click:Connect(function()
 	flying = not flying
@@ -319,21 +336,3 @@ player.CharacterAdded:Connect(function()
 	if align then align:Destroy() align = nil end
 	if gui.Parent == nil then gui.Parent = player:WaitForChild("PlayerGui") end
 end)
-
--- Buat container untuk tombol naik/turun
-local moveFrame = Instance.new("Frame")
-moveFrame.Size = UDim2.fromOffset(70, 140)
-moveFrame.Position = UDim2.new(1,-90,1,-200) -- posisi awal (kanan bawah)
-moveFrame.BackgroundTransparency = 1
-moveFrame.Active = true
-moveFrame.Draggable = true
-moveFrame.Parent = gui
-
--- Tombol Naik
-local btnUp = makeBtn(moveFrame,"↑",UDim2.fromOffset(60,60),UDim2.new(0,5,0,0),Color3.fromRGB(40,120,200))
-btnUp.TextSize = 28
-
--- Tombol Turun
-local btnDown = makeBtn(moveFrame,"↓",UDim2.fromOffset(60,60),UDim2.new(0,5,0,70),Color3.fromRGB(200,80,40))
-btnDown.TextSize = 28
-
