@@ -300,7 +300,7 @@ end
 local pTog = pages["Toggles"]
 local function stateText(flag) return flag and "ON" or "OFF" end
 
-local bFly = makeButton(pTog, "✈️ Fly: "..stateText(FLY), function()
+local bFly = makeButton(pTog, "✈️ Fly [F]: "..stateText(FLY), function()
     FLY = not FLY
     if FLY then
         if bodyVelocity then bodyVelocity:Destroy() end
@@ -313,12 +313,12 @@ local bFly = makeButton(pTog, "✈️ Fly: "..stateText(FLY), function()
         if bodyVelocity then bodyVelocity:Destroy() bodyVelocity=nil end
         rootPart.AssemblyLinearVelocity = Vector3.zero
     end
-    bFly.Text = "✈️ Fly: "..stateText(FLY)
+    bFly.Text = "✈️ Fly [F]: "..stateText(FLY)
 end)
 
-local bNoclip = makeButton(pTog, "🚪 NoClip: "..stateText(NOCLIP), function()
+local bNoclip = makeButton(pTog, "🚪 NoClip [B]: "..stateText(NOCLIP), function()
     NOCLIP = not NOCLIP
-    bNoclip.Text = "🚪 NoClip: "..stateText(NOCLIP)
+    bNoclip.Text = "🚪 NoClip [B]: "..stateText(NOCLIP)
 end)
 
 local speedRow = makeRow(pTog)
@@ -338,20 +338,20 @@ for _,p in ipairs(SPEED_PRESETS) do
     end)
 end
 
-local bSpeed = makeButton(pTog, "⚡ Speed Hack: "..stateText(SPEED), function()
+local bSpeed = makeButton(pTog, "⚡ Speed Hack [G]: "..stateText(SPEED), function()
     SPEED = not SPEED
-    bSpeed.Text = "⚡ Speed Hack: "..stateText(SPEED)
+    bSpeed.Text = "⚡ Speed Hack [G]: "..stateText(SPEED)
 end)
 
-local bInf = makeButton(pTog, "🌀 Infinite Jump: "..stateText(INFJUMP), function()
+local bInf = makeButton(pTog, "🌀 Infinite Jump [H]: "..stateText(INFJUMP), function()
     INFJUMP = not INFJUMP
-    bInf.Text = "🌀 Infinite Jump: "..stateText(INFJUMP)
+    bInf.Text = "🌀 Infinite Jump [H]: "..stateText(INFJUMP)
 end)
 
-local bJump = makeButton(pTog, "⬆️ Jump Boost: "..stateText(JUMPBOOST), function()
+local bJump = makeButton(pTog, "⬆️ Jump Boost [J]: "..stateText(JUMPBOOST), function()
     JUMPBOOST = not JUMPBOOST
     if humanoid then humanoid.JumpPower = JUMPBOOST and JUMP_POWER_ON or JUMP_POWER_OFF end
-    bJump.Text = "⬆️ Jump Boost: "..stateText(JUMPBOOST)
+    bJump.Text = "⬆️ Jump Boost [J]: "..stateText(JUMPBOOST)
 end)
 
 local tpRow = makeRow(pTog)
@@ -378,9 +378,9 @@ smallBtn(tpRow, "Random Safe", 120, function()
     end
 end)
 
-local bESP = makeButton(pTog, "👁️ ESP: "..stateText(ESP_ON), function()
+local bESP = makeButton(pTog, "👁️ ESP [E]: "..stateText(ESP_ON), function()
     ESP_ON = not ESP_ON
-    bESP.Text = "👁️ ESP: "..stateText(ESP_ON)
+    bESP.Text = "👁️ ESP [E]: "..stateText(ESP_ON)
     if not ESP_ON then
         for p,pack in pairs(espAdorn) do
             if pack.box then pack.box:Destroy() end
@@ -390,14 +390,14 @@ local bESP = makeButton(pTog, "👁️ ESP: "..stateText(ESP_ON), function()
     end
 end)
 
-local bGod = makeButton(pTog, "🛡️ God Mode: "..stateText(GODMODE), function()
+local bGod = makeButton(pTog, "🛡️ God Mode [M]: "..stateText(GODMODE), function()
     GODMODE = not GODMODE
-    bGod.Text = "🛡️ God Mode: "..stateText(GODMODE)
+    bGod.Text = "🛡️ God Mode [M]: "..stateText(GODMODE)
 end)
 
-local bAfk = makeButton(pTog, "😴 Anti-AFK: "..stateText(ANTIAFK), function()
+local bAfk = makeButton(pTog, "😴 Anti-AFK [0]: "..stateText(ANTIAFK), function()
     ANTIAFK = not ANTIAFK
-    bAfk.Text = "😴 Anti-AFK: "..stateText(ANTIAFK)
+    bAfk.Text = "😴 Anti-AFK [0]: "..stateText(ANTIAFK)
 end)
 
 local bReset = makeButton(pTog, "♻️ Reset Character", function()
@@ -936,16 +936,51 @@ UIS.InputBegan:Connect(function(i, g)
     if g then return end
     if i.UserInputType == Enum.UserInputType.Keyboard then
         local kc = i.KeyCode
-        if kc == Keybinds.ToggleFly then bFly:Activate()
-        elseif kc == Keybinds.ToggleNoclip then bNoclip:Activate()
-        elseif kc == Keybinds.ToggleSpeed then bSpeed:Activate()
-        elseif kc == Keybinds.ToggleInfJump then bInf:Activate()
-        elseif kc == Keybinds.ToggleJumpBoost then bJump:Activate()
+        if kc == Keybinds.ToggleFly then 
+            FLY = not FLY
+            if FLY then
+                if bodyVelocity then bodyVelocity:Destroy() end
+                bodyVelocity = Instance.new("BodyVelocity")
+                bodyVelocity.MaxForce = Vector3.new(1e5,1e5,1e5)
+                bodyVelocity.Velocity = Vector3.zero
+                bodyVelocity.Parent = rootPart
+                rootPart.AssemblyLinearVelocity = Vector3.zero
+            else
+                if bodyVelocity then bodyVelocity:Destroy() bodyVelocity=nil end
+                rootPart.AssemblyLinearVelocity = Vector3.zero
+            end
+            bFly.Text = "✈️ Fly [F]: "..stateText(FLY)
+        elseif kc == Keybinds.ToggleNoclip then 
+            NOCLIP = not NOCLIP
+            bNoclip.Text = "🚪 NoClip [B]: "..stateText(NOCLIP)
+        elseif kc == Keybinds.ToggleSpeed then 
+            SPEED = not SPEED
+            bSpeed.Text = "⚡ Speed Hack [G]: "..stateText(SPEED)
+        elseif kc == Keybinds.ToggleInfJump then 
+            INFJUMP = not INFJUMP
+            bInf.Text = "🌀 Infinite Jump [H]: "..stateText(INFJUMP)
+        elseif kc == Keybinds.ToggleJumpBoost then 
+            JUMPBOOST = not JUMPBOOST
+            if humanoid then humanoid.JumpPower = JUMPBOOST and JUMP_POWER_ON or JUMP_POWER_OFF end
+            bJump.Text = "⬆️ Jump Boost [J]: "..stateText(JUMPBOOST)
         elseif kc == Keybinds.TeleportForward then if rootPart then rootPart.CFrame = rootPart.CFrame + rootPart.CFrame.LookVector*TELEPORT_DIST end
         elseif kc == Keybinds.TeleportBack then if rootPart then rootPart.CFrame = rootPart.CFrame - rootPart.CFrame.LookVector*TELEPORT_DIST end
-        elseif kc == Keybinds.ToggleESP then bESP:Activate()
-        elseif kc == Keybinds.ToggleGod then bGod:Activate()
-        elseif kc == Keybinds.ToggleAntiAFK then bAfk:Activate()
+        elseif kc == Keybinds.ToggleESP then 
+            ESP_ON = not ESP_ON
+            bESP.Text = "👁️ ESP [E]: "..stateText(ESP_ON)
+            if not ESP_ON then
+                for p,pack in pairs(espAdorn) do
+                    if pack.box then pack.box:Destroy() end
+                    if pack.bill then pack.bill:Destroy() end
+                    espAdorn[p] = nil
+                end
+            end
+        elseif kc == Keybinds.ToggleGod then 
+            GODMODE = not GODMODE
+            bGod.Text = "🛡️ God Mode [M]: "..stateText(GODMODE)
+        elseif kc == Keybinds.ToggleAntiAFK then 
+            ANTIAFK = not ANTIAFK
+            bAfk.Text = "😴 Anti-AFK [0]: "..stateText(ANTIAFK)
         elseif kc == Keybinds.QuickTPSelected then
             if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
                 rootPart.CFrame = selectedPlayer.Character.HumanoidRootPart.CFrame
