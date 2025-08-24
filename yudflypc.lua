@@ -1,25 +1,6 @@
 --[[
 🔥 YUDA HUB 2.0 — Modern GUI + Feature Pack
 Author: Yuda (Jebek) — jebek.id
-Place as LocalScript in StarterPlayerScripts.
-
-New Features over v1:
-  ✓ Modern, minimal, translucent GUI with sidebar tabs
-  ✓ Save/Load Waypoints (exploit-only writefile/readfile fallback-aware)
-  ✓ Spectate Player (POV switch) + Unspectate
-  ✓ Teleport: Random Safe Spot
-  ✓ ESP+: box + name + health (toggle & color cycler)
-  ✓ Auto-Farm Route (loop through waypoints with tween speed)
-  ✓ Macro Keybind Editor (rebinding for main toggles)
-  ✓ Auto-Heal using tools from Backpack (Medkit/Bandage/Heal etc.)
-  ✓ Hide Hub (global toggle key)
-  ✓ 3D Waypoint Markers (floating orb + label)
-  ✓ Mini Script Hub (input + execute with loadstring if available)
-
-Notes:
-- Uses exploit APIs when available: writefile, readfile, isfile, loadstring.
-- When unavailable (e.g., Studio), features will gracefully notify.
-- This script is intentionally compact(ish) but full-featured. Adjust to your game as needed.
 ]]
 
 -- ===== Services =====
