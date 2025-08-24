@@ -232,12 +232,6 @@ Players.PlayerAdded:Connect(refreshPlayerList)
 Players.PlayerRemoving:Connect(refreshPlayerList)
 refreshPlayerList()
 
--- Naik / Turun
-local btnUp = makeBtn(gui,"↑",UDim2.fromOffset(60,60),UDim2.new(1,-80,1,-160),Color3.fromRGB(40,120,200))
-btnUp.TextSize = 28
-local btnDown = makeBtn(gui,"↓",UDim2.fromOffset(60,60),UDim2.new(1,-80,1,-90),Color3.fromRGB(200,80,40))
-btnDown.TextSize = 28
-
 -- ===== LOGIC =====
 btnToggle.MouseButton1Click:Connect(function()
 	flying = not flying
