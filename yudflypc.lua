@@ -1,5 +1,5 @@
 --[[
-🔥 YUDA HUB 2.0 — Modern GUI + Feature Pack
+🔥 Universal Hack By Jebek Gacor — Modern GUI + Feature Pack
 Author: Yuda (Jebek) — jebek.id
 ]]
 
@@ -148,7 +148,7 @@ local title = Instance.new("TextLabel", header)
 title.Size = UDim2.new(1, -120, 1, 0)
 title.Position = UDim2.new(0, 16, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "🔥 YUDA HUB 2.0"
+title.Text = "🔥 Universal Hack By Jebek Gacor"
 title.Font = Enum.Font.GothamBold
 title.TextSize = 18
 title.TextXAlignment = Enum.TextXAlignment.Left
@@ -1009,4 +1009,4 @@ Players.PlayerRemoving:Connect(function(p)
 end)
 
 -- Final
-notify("Yuda Hub 2.0", "Loaded ✅", 3)
+notify("Universal Hack By Jebek Gacor", "Loaded ✅", 3)
