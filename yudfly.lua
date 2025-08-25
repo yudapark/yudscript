@@ -1,5 +1,5 @@
 -- LocalScript @ StarterPlayerScripts
--- Fly Controller Jebek Gacor v1 Mobile + Speed Preset + Noclip + Multi-Waypoint + Teleport to Player + Theme UI
+-- Fly Controller Jebek Gacor Mobile + Speed Preset + Noclip + Multi-Waypoint + Teleport to Player + Theme UI
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
