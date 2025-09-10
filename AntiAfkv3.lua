@@ -1,4 +1,4 @@
-﻿-- Anti-AFK Script dengan GUI (LocalScript)
+-- Anti-AFK Script dengan GUI (LocalScript)
 -- Letakkan di StarterPlayerScripts atau StarterGui
 
 local Players = game:GetService("Players")
