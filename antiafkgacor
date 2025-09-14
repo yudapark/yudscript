@@ -30,7 +30,7 @@ frame.Parent = screenGui
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-title.Text = "Utility + Anti AFK"
+title.Text = "Utility + Anti AFK (Beta) By Jebek Gacor"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 18
@@ -237,3 +237,4 @@ Players.PlayerRemoving:Connect(function(leavingPlayer)
         TeleportService:Teleport(game.PlaceId, player)
     end
 end)
+
