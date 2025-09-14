@@ -1,4 +1,4 @@
-﻿-- LocalScript di StarterPlayerScripts
+-- LocalScript di StarterPlayerScripts
 
 -- Services
 local Players = game:GetService("Players")
