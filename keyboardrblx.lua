@@ -1,4 +1,4 @@
--- KEYBOARD ROBLOX (COMPACT + CENTER PERFECT)
+-- KEYBOARD ROBLOX (COMPACT + CENTER PERFECT + MINIMIZE FIX)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -13,10 +13,11 @@ gui.ResetOnSpawn = false
 -- MAIN KEYBOARD (UKURAN KECIL)
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 500, 0, 280)
-main.Position = UDim2.new(0.5, -250, 1, -280)
+main.Position = UDim2.new(0.5, -250, 0.5, -140)  -- Posisi tengah layar saat pertama
 main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 main.BorderSizePixel = 0
 main.ClipsDescendants = true
+main.Visible = true  -- Awalnya muncul
 
 -- TOP BAR
 local topBar = Instance.new("Frame", main)
@@ -103,6 +104,7 @@ end
 local currentText = ""
 local capsLock = false
 local symbolMode = false
+local isMinimized = false  -- Status minimize
 
 local function updateText()
     textBox.Text = currentText
@@ -221,7 +223,6 @@ local function refreshKeyboard()
         createRowButtons(row1, angka, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(60, 60, 80))
         
         -- Huruf baris 2
-        local huruf2Display = huruf2
         if capsLock then
             createRowButtons(row2, huruf2, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         else
@@ -308,12 +309,28 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
+-- BUBBLE CLICK: MUNCULKAN KEYBOARD (HILANGKAN MINIMIZE)
 bubble.MouseButton1Click:Connect(function()
-    TweenService:Create(main, TweenInfo.new(0.2), {Position = UDim2.new(0.5, -250, 0.5, -140)}):Play()
+    if isMinimized then
+        -- Keyboard sedang minimize, munculkan
+        TweenService:Create(main, TweenInfo.new(0.2), {Position = UDim2.new(0.5, -250, 0.5, -140)}):Play()
+        main.Visible = true
+        isMinimized = false
+    else
+        -- Keyboard sedang muncul, minimize
+        TweenService:Create(main, TweenInfo.new(0.2), {Position = UDim2.new(0.5, -250, 1.5, 0)}):Play()
+        task.wait(0.2)
+        main.Visible = false
+        isMinimized = true
+    end
 end)
 
+-- MINIMIZE BUTTON: SEMBUNYIKAN KEYBOARD
 minimize.MouseButton1Click:Connect(function()
-    TweenService:Create(main, TweenInfo.new(0.2), {Position = UDim2.new(0.5, -250, 1, -280)}):Play()
+    TweenService:Create(main, TweenInfo.new(0.2), {Position = UDim2.new(0.5, -250, 1.5, 0)}):Play()
+    task.wait(0.2)
+    main.Visible = false
+    isMinimized = true
 end)
 
 sendBtn.MouseButton1Click:Connect(function()
