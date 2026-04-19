@@ -6,13 +6,28 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local chatTextBoxActive = nil -- Store original active state
+local customKeyboardActive = false
+
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "YudaExternalKeyboard"
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-screenGui.DisplayOrder = 1000
+screenGui.DisplayOrder = 2000
 screenGui.Parent = playerGui
+
+-- Mobile backdrop to block native keyboard
+local backdrop = Instance.new("Frame")
+backdrop.Name = "MobileBackdrop"
+backdrop.Size = UDim2.new(1, 0, 1, 0)
+backdrop.Position = UDim2.new(0, 0, 0, 0)
+backdrop.BackgroundTransparency = 1
+backdrop.ZIndex = 1500
+backdrop.Active = true
+backdrop.Visible = false
+backdrop.Parent = screenGui
 
 -- ================== IMPROVED DRAG FUNCTION ==================
 local draggingFrame = nil
@@ -44,10 +59,7 @@ UserInputService.InputChanged:Connect(function(input)
         local frameSize = draggingFrame.AbsoluteSize
         local screenSize = workspace.CurrentCamera.ViewportSize
         
-        newX = UDim.new(0, math.clamp(startPos.X.Offset + delta.X, 0, screenSize.X - frameSize.X))
-        newY = UDim.new(0, math.clamp(startPos.Y.Offset + delta.Y, 0, screenSize.Y - frameSize.Y))
-        
-        draggingFrame.Position = UDim2.new(newX, newY)
+        draggingFrame.Position = UDim2.new(0, math.clamp(startPos.X.Offset + delta.X, 0, screenSize.X - frameSize.X), 0, math.clamp(startPos.Y.Offset + delta.Y, 0, screenSize.Y - frameSize.Y))
     end
 end)
 
@@ -61,6 +73,14 @@ local function getChatTextBox()
         if not rbxGeneral then return nil end
         
         local textChatBox = rbxGeneral:WaitForChild("TextChatBox", 2)
+        
+        -- Mobile: Disable native keyboard when custom active
+        if isMobile and customKeyboardActive then
+            chatTextBoxActive = textChatBox.Active
+            textChatBox.Active = false
+            textChatBox.TextEditable = true
+        end
+        
         return textChatBox
     end)
     
@@ -212,7 +232,11 @@ local function typeChar(char)
     end
     
     tb.TextEditable = true
-    tb:CaptureFocus()
+    
+    -- Mobile: Avoid CaptureFocus to prevent native keyboard
+    if not isMobile then
+        tb:CaptureFocus()
+    end
     task.wait()
     
     tb.Text = tb.Text .. char
@@ -298,13 +322,34 @@ end
 
 -- ================== TOGGLE ==================
 bubble.MouseButton1Click:Connect(function()
+    customKeyboardActive = true
     keyboard.Visible = true
     bubble.Visible = false
+    
+    -- Mobile: Show backdrop and disable native keyboard
+    if isMobile then
+        backdrop.Visible = true
+        local tb = getChatTextBox()
+        if tb then
+            chatTextBoxActive = tb.Active
+            tb.Active = false
+        end
+    end
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
+    customKeyboardActive = false
     keyboard.Visible = false
     bubble.Visible = true
+    
+    -- Mobile: Restore native keyboard & hide backdrop
+    if isMobile then
+        backdrop.Visible = false
+        local tb = getChatTextBox()
+        if tb and chatTextBoxActive ~= nil then
+            tb.Active = chatTextBoxActive
+        end
+    end
 end)
 
 -- Update keyboard size on resize
