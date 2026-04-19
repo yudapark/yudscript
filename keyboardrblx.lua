@@ -1,4 +1,4 @@
--- KEYBOARD ROBLOX (COMPACT + CENTER PERFECT + MINIMIZE FIX)
+-- KEYBOARD ROBLOX (COMPACT + CENTER + MINIMIZE FIXED)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -13,11 +13,10 @@ gui.ResetOnSpawn = false
 -- MAIN KEYBOARD (UKURAN KECIL)
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 500, 0, 280)
-main.Position = UDim2.new(0.5, -250, 0.5, -140)  -- Posisi tengah layar saat pertama
+main.Position = UDim2.new(0.5, -250, 0.5, -140)
 main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 main.BorderSizePixel = 0
 main.ClipsDescendants = true
-main.Visible = true  -- Awalnya muncul
 
 -- TOP BAR
 local topBar = Instance.new("Frame", main)
@@ -55,13 +54,13 @@ sendBtn.TextColor3 = Color3.new(1, 1, 1)
 sendBtn.TextSize = 16
 
 -- MINIMIZE BUTTON
-local minimize = Instance.new("TextButton", topBar)
-minimize.Size = UDim2.new(0, 40, 0, 30)
-minimize.Position = UDim2.new(0, 450, 0, 5)
-minimize.Text = "-"
-minimize.BackgroundColor3 = Color3.fromRGB(200, 80, 80)
-minimize.TextColor3 = Color3.new(1, 1, 1)
-minimize.TextSize = 20
+local minimizeBtn = Instance.new("TextButton", topBar)
+minimizeBtn.Size = UDim2.new(0, 40, 0, 30)
+minimizeBtn.Position = UDim2.new(0, 450, 0, 5)
+minimizeBtn.Text = "-"
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(200, 80, 80)
+minimizeBtn.TextColor3 = Color3.new(1, 1, 1)
+minimizeBtn.TextSize = 20
 
 -- KEYBOARD CONTAINER
 local keyboardArea = Instance.new("Frame", main)
@@ -104,7 +103,6 @@ end
 local currentText = ""
 local capsLock = false
 local symbolMode = false
-local isMinimized = false  -- Status minimize
 
 local function updateText()
     textBox.Text = currentText
@@ -136,7 +134,6 @@ local simbol4 = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
 local function refreshKeyboard()
     clearRow(row1)
     
-    -- Hapus baris 2,3,4,5 jika ada
     for i = 2, 5 do
         local row = keyboardArea:FindFirstChild("row"..i)
         if row then
@@ -145,7 +142,6 @@ local function refreshKeyboard()
     end
     
     if symbolMode then
-        -- MODE SIMBOL
         local row2 = Instance.new("Frame", keyboardArea)
         row2.Name = "row2"
         row2.Size = UDim2.new(1, -20, 0, 40)
@@ -175,7 +171,6 @@ local function refreshKeyboard()
         createRowButtons(row3, simbol3, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(70, 70, 70))
         createRowButtons(row4, simbol4, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(60, 60, 80))
         
-        -- Tombol bawah
         local bawah = {"ABC", "SPACE", "⌫", "CLEAR"}
         createRowButtons(row5, bawah, function(t)
             if t == "ABC" then
@@ -194,7 +189,6 @@ local function refreshKeyboard()
         end, Color3.fromRGB(80, 80, 80))
         
     else
-        -- MODE HURUF
         local row2 = Instance.new("Frame", keyboardArea)
         row2.Name = "row2"
         row2.Size = UDim2.new(1, -20, 0, 40)
@@ -219,10 +213,8 @@ local function refreshKeyboard()
         row5.Position = UDim2.new(0, 10, 0, 185)
         row5.BackgroundTransparency = 1
         
-        -- Angka
         createRowButtons(row1, angka, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(60, 60, 80))
         
-        -- Huruf baris 2
         if capsLock then
             createRowButtons(row2, huruf2, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         else
@@ -230,7 +222,6 @@ local function refreshKeyboard()
             createRowButtons(row2, lower, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         end
         
-        -- Huruf baris 3
         if capsLock then
             createRowButtons(row3, huruf3, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         else
@@ -238,7 +229,6 @@ local function refreshKeyboard()
             createRowButtons(row3, lower, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         end
         
-        -- Huruf baris 4
         if capsLock then
             createRowButtons(row4, huruf4, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         else
@@ -246,7 +236,6 @@ local function refreshKeyboard()
             createRowButtons(row4, lower, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         end
         
-        -- Tombol bawah
         local bawah = {"CAPS", "?!#", "SPACE", "⌫", "CLEAR"}
         createRowButtons(row5, bawah, function(t)
             if t == "CAPS" then
@@ -276,7 +265,7 @@ local function refreshKeyboard()
     end
 end
 
--- FLOATING BUBBLE (KECIL)
+-- FLOATING BUBBLE
 local bubble = Instance.new("TextButton", gui)
 bubble.Size = UDim2.new(0, 45, 0, 45)
 bubble.Position = UDim2.new(0, 10, 0.65, 0)
@@ -309,28 +298,31 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- BUBBLE CLICK: MUNCULKAN KEYBOARD (HILANGKAN MINIMIZE)
-bubble.MouseButton1Click:Connect(function()
-    if isMinimized then
-        -- Keyboard sedang minimize, munculkan
-        TweenService:Create(main, TweenInfo.new(0.2), {Position = UDim2.new(0.5, -250, 0.5, -140)}):Play()
-        main.Visible = true
-        isMinimized = false
-    else
-        -- Keyboard sedang muncul, minimize
-        TweenService:Create(main, TweenInfo.new(0.2), {Position = UDim2.new(0.5, -250, 1.5, 0)}):Play()
-        task.wait(0.2)
-        main.Visible = false
-        isMinimized = true
-    end
+-- MINIMIZE FUNCTION (SEDERHANA & PASTI BERHASIL)
+local keyboardVisible = true
+
+local function hideKeyboard()
+    main.Visible = false
+    keyboardVisible = false
+end
+
+local function showKeyboard()
+    main.Visible = true
+    keyboardVisible = true
+end
+
+-- Tombol minimize: LANGSUNG HIDE
+minimizeBtn.MouseButton1Click:Connect(function()
+    hideKeyboard()
 end)
 
--- MINIMIZE BUTTON: SEMBUNYIKAN KEYBOARD
-minimize.MouseButton1Click:Connect(function()
-    TweenService:Create(main, TweenInfo.new(0.2), {Position = UDim2.new(0.5, -250, 1.5, 0)}):Play()
-    task.wait(0.2)
-    main.Visible = false
-    isMinimized = true
+-- Bubble klik: TAMPILKAN atau SEMBUNYIKAN
+bubble.MouseButton1Click:Connect(function()
+    if keyboardVisible then
+        hideKeyboard()
+    else
+        showKeyboard()
+    end
 end)
 
 sendBtn.MouseButton1Click:Connect(function()
@@ -340,3 +332,4 @@ sendBtn.MouseButton1Click:Connect(function()
 end)
 
 refreshKeyboard()
+showKeyboard()
