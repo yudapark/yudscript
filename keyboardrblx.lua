@@ -1,4 +1,4 @@
--- KEYBOARD ROBLOX (COMPACT + CENTER + MINIMIZE FIXED)
+-- KEYBOARD ROBLOX (DRAGGABLE + COMPACT + CENTER)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -10,7 +10,7 @@ local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name = "KeyboardUI"
 gui.ResetOnSpawn = false
 
--- MAIN KEYBOARD (UKURAN KECIL)
+-- MAIN KEYBOARD (BISA DI DRAG)
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 500, 0, 280)
 main.Position = UDim2.new(0.5, -250, 0.5, -140)
@@ -18,7 +18,7 @@ main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 main.BorderSizePixel = 0
 main.ClipsDescendants = true
 
--- TOP BAR
+-- TOP BAR (SEBAGAI AREA DRAG)
 local topBar = Instance.new("Frame", main)
 topBar.Size = UDim2.new(1, 0, 0, 40)
 topBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
@@ -103,6 +103,35 @@ end
 local currentText = ""
 local capsLock = false
 local symbolMode = false
+local keyboardVisible = true
+
+-- DRAG KEYBOARD (via TOPBAR)
+local dragStart, startPos, isDragging = nil, nil, false
+
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDragging = true
+        dragStart = input.Position
+        startPos = main.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                isDragging = false
+            end
+        end)
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        main.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
 
 local function updateText()
     textBox.Text = currentText
@@ -171,7 +200,7 @@ local function refreshKeyboard()
         createRowButtons(row3, simbol3, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(70, 70, 70))
         createRowButtons(row4, simbol4, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(60, 60, 80))
         
-        local bawah = {"ABC", "SPACE", "HAPUS", "CLEAR"}
+        local bawah = {"ABC", "SPACE", "⌫", "CLEAR"}
         createRowButtons(row5, bawah, function(t)
             if t == "ABC" then
                 symbolMode = false
@@ -179,7 +208,7 @@ local function refreshKeyboard()
             elseif t == "SPACE" then
                 currentText = currentText .. " "
                 updateText()
-            elseif t == "HAPUS" then
+            elseif t == "⌫" then
                 currentText = currentText:sub(1, -2)
                 updateText()
             elseif t == "CLEAR" then
@@ -265,7 +294,7 @@ local function refreshKeyboard()
     end
 end
 
--- FLOATING BUBBLE
+-- FLOATING BUBBLE (BISA DI DRAG JUGA)
 local bubble = Instance.new("TextButton", gui)
 bubble.Size = UDim2.new(0, 45, 0, 45)
 bubble.Position = UDim2.new(0, 10, 0.65, 0)
@@ -276,31 +305,34 @@ bubble.TextSize = 25
 bubble.BorderSizePixel = 0
 
 -- DRAG BUBBLE
-local dragStart, startPos, dragging = nil, nil, false
+local dragStartBubble, startPosBubble, isDraggingBubble = nil, nil, false
 
 bubble.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = bubble.Position
+        isDraggingBubble = true
+        dragStartBubble = input.Position
+        startPosBubble = bubble.Position
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+                isDraggingBubble = false
             end
         end)
     end
 end)
 
 UIS.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        bubble.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    if isDraggingBubble and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStartBubble
+        bubble.Position = UDim2.new(
+            startPosBubble.X.Scale,
+            startPosBubble.X.Offset + delta.X,
+            startPosBubble.Y.Scale,
+            startPosBubble.Y.Offset + delta.Y
+        )
     end
 end)
 
--- MINIMIZE FUNCTION (SEDERHANA & PASTI BERHASIL)
-local keyboardVisible = true
-
+-- FUNGSI MINIMIZE
 local function hideKeyboard()
     main.Visible = false
     keyboardVisible = false
@@ -311,12 +343,12 @@ local function showKeyboard()
     keyboardVisible = true
 end
 
--- Tombol minimize: LANGSUNG HIDE
+-- Tombol minimize
 minimizeBtn.MouseButton1Click:Connect(function()
     hideKeyboard()
 end)
 
--- Bubble klik: TAMPILKAN atau SEMBUNYIKAN
+-- Bubble klik untuk toggle keyboard
 bubble.MouseButton1Click:Connect(function()
     if keyboardVisible then
         hideKeyboard()
