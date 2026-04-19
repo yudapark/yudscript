@@ -171,7 +171,7 @@ local function refreshKeyboard()
         createRowButtons(row3, simbol3, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(70, 70, 70))
         createRowButtons(row4, simbol4, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(60, 60, 80))
         
-        local bawah = {"ABC", "SPACE", "⌫", "CLEAR"}
+        local bawah = {"ABC", "SPACE", "HAPUS", "CLEAR"}
         createRowButtons(row5, bawah, function(t)
             if t == "ABC" then
                 symbolMode = false
@@ -179,7 +179,7 @@ local function refreshKeyboard()
             elseif t == "SPACE" then
                 currentText = currentText .. " "
                 updateText()
-            elseif t == "⌫" then
+            elseif t == "HAPUS" then
                 currentText = currentText:sub(1, -2)
                 updateText()
             elseif t == "CLEAR" then
