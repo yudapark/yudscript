@@ -1,45 +1,52 @@
--- KEYBOARD ROBLOX UI BAGUS + TOMBOL KIRIM
+-- KEYBOARD ROBLOX FINAL PRO (FLOATING + ANGKA)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local TextChatService = game:GetService("TextChatService")
+local UIS = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name = "KeyboardUI"
 
--- MAIN CONTAINER
+-- MAIN KEYBOARD
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(1,0,0,260)
+main.Size = UDim2.new(1,0,0,280)
 main.Position = UDim2.new(0,0,1,0)
 main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 main.BorderSizePixel = 0
 
--- INPUT BAR
+-- TOP BAR
 local topBar = Instance.new("Frame", main)
 topBar.Size = UDim2.new(1,0,0,50)
 topBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
-topBar.BorderSizePixel = 0
 
+-- INPUT TEXT
 local textBox = Instance.new("TextLabel", topBar)
-textBox.Size = UDim2.new(0.75, -10, 1, -10)
+textBox.Size = UDim2.new(0.65, -10, 1, -10)
 textBox.Position = UDim2.new(0,10,0,5)
 textBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
 textBox.TextColor3 = Color3.new(1,1,1)
 textBox.TextScaled = true
 textBox.TextXAlignment = Enum.TextXAlignment.Left
 textBox.Text = ""
-textBox.BorderSizePixel = 0
 
 -- SEND BUTTON
 local sendBtn = Instance.new("TextButton", topBar)
-sendBtn.Size = UDim2.new(0.25, -10, 1, -10)
-sendBtn.Position = UDim2.new(0.75,5,0,5)
+sendBtn.Size = UDim2.new(0.2, -5, 1, -10)
+sendBtn.Position = UDim2.new(0.65,5,0,5)
 sendBtn.Text = "KIRIM"
 sendBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
 sendBtn.TextColor3 = Color3.new(1,1,1)
 sendBtn.TextScaled = true
-sendBtn.BorderSizePixel = 0
+
+-- MINIMIZE BUTTON
+local minimize = Instance.new("TextButton", topBar)
+minimize.Size = UDim2.new(0.15, -5, 1, -10)
+minimize.Position = UDim2.new(0.85,5,0,5)
+minimize.Text = "-"
+minimize.BackgroundColor3 = Color3.fromRGB(200,80,80)
+minimize.TextScaled = true
 
 -- KEYBOARD AREA
 local keyboard = Instance.new("Frame", main)
@@ -48,22 +55,50 @@ keyboard.Position = UDim2.new(0,0,0,50)
 keyboard.BackgroundTransparency = 1
 
 local grid = Instance.new("UIGridLayout", keyboard)
-grid.CellSize = UDim2.new(0.1, -5, 0.22, -5)
+grid.CellSize = UDim2.new(0.1, -5, 0.2, -5)
 grid.CellPadding = UDim2.new(0,5,0,5)
 
--- TOGGLE BUTTON
-local toggle = Instance.new("TextButton", gui)
-toggle.Size = UDim2.new(0,50,0,50)
-toggle.Position = UDim2.new(0,10,1,-300)
-toggle.Text = "⌨"
-toggle.BackgroundColor3 = Color3.fromRGB(40,40,40)
+-- FLOATING BUBBLE
+local bubble = Instance.new("TextButton", gui)
+bubble.Size = UDim2.new(0,60,0,60)
+bubble.Position = UDim2.new(0,50,0.5,0)
+bubble.Text = "⌨"
+bubble.BackgroundColor3 = Color3.fromRGB(0,170,255)
+bubble.TextScaled = true
 
-local opened = false
+-- DRAG LOGIC (biar bisa digeser)
+local dragging, dragInput, startPos, startInput
 
-toggle.MouseButton1Click:Connect(function()
-    opened = not opened
-    local pos = opened and UDim2.new(0,0,1,-260) or UDim2.new(0,0,1,0)
-    TweenService:Create(main, TweenInfo.new(0.3), {Position = pos}):Play()
+bubble.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        startPos = bubble.Position
+        startInput = input.Position
+    end
+end)
+
+bubble.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - startInput
+        bubble.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
 end)
 
 -- TEXT
@@ -89,20 +124,31 @@ local function sendMessage(msg)
     end
 end
 
--- BUTTON CREATE
+-- KEY FUNCTION
 local function key(label, func)
     local btn = Instance.new("TextButton")
     btn.Text = label
     btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
     btn.TextColor3 = Color3.new(1,1,1)
     btn.TextScaled = true
-    btn.BorderSizePixel = 0
     btn.Parent = keyboard
 
     btn.MouseButton1Click:Connect(func)
 end
 
--- LETTERS
+-- ANGKA
+for i=1,9 do
+    key(tostring(i), function()
+        currentText = currentText .. i
+        updateText()
+    end)
+end
+key("0", function()
+    currentText = currentText .. "0"
+    updateText()
+end)
+
+-- HURUF
 local letters = {
 "Q","W","E","R","T","Y","U","I","O","P",
 "A","S","D","F","G","H","J","K","L",
@@ -116,27 +162,37 @@ for _,k in ipairs(letters) do
     end)
 end
 
--- SPACE
+-- SPECIAL
 key("SPACE", function()
     currentText = currentText .. " "
     updateText()
 end)
 
--- DELETE
 key("DEL", function()
     currentText = currentText:sub(1,-2)
     updateText()
 end)
 
--- CLEAR
 key("CLEAR", function()
     currentText = ""
     updateText()
 end)
 
--- SEND BUTTON FUNCTION
+-- BUTTON EVENTS
 sendBtn.MouseButton1Click:Connect(function()
     sendMessage(currentText)
     currentText = ""
     updateText()
+end)
+
+bubble.MouseButton1Click:Connect(function()
+    TweenService:Create(main, TweenInfo.new(0.3), {
+        Position = UDim2.new(0,0,1,-280)
+    }):Play()
+end)
+
+minimize.MouseButton1Click:Connect(function()
+    TweenService:Create(main, TweenInfo.new(0.3), {
+        Position = UDim2.new(0,0,1,0)
+    }):Play()
 end)
