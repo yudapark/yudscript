@@ -1,4 +1,4 @@
--- KEYBOARD ROBLOX FULL (1 FILE)
+-- KEYBOARD ROBLOX UI RAPI (FULL BAWAH)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -9,31 +9,40 @@ local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name = "KeyboardUI"
 
 -- TEXT DISPLAY
-local textLabel = Instance.new("TextLabel", gui)
-textLabel.Size = UDim2.new(0.8, 0, 0.1, 0)
-textLabel.Position = UDim2.new(0.1, 0, 0.7, 0)
-textLabel.BackgroundColor3 = Color3.fromRGB(30,30,30)
-textLabel.TextColor3 = Color3.new(1,1,1)
-textLabel.TextScaled = true
-textLabel.Text = ""
+local textBox = Instance.new("TextLabel", gui)
+textBox.Size = UDim2.new(1, -20, 0, 50)
+textBox.Position = UDim2.new(0, 10, 1, -220)
+textBox.BackgroundColor3 = Color3.fromRGB(25,25,25)
+textBox.TextColor3 = Color3.new(1,1,1)
+textBox.TextScaled = true
+textBox.Text = ""
+textBox.BorderSizePixel = 0
 
--- KEYBOARD FRAME
+-- KEYBOARD CONTAINER
 local keyboard = Instance.new("Frame", gui)
-keyboard.Size = UDim2.new(1,0,0.3,0)
-keyboard.Position = UDim2.new(0,0,1,0)
-keyboard.BackgroundColor3 = Color3.fromRGB(20,20,20)
+keyboard.Size = UDim2.new(1, 0, 0, 200)
+keyboard.Position = UDim2.new(0, 0, 1, 0)
+keyboard.BackgroundColor3 = Color3.fromRGB(15,15,15)
+keyboard.BorderSizePixel = 0
+
+-- GRID
+local grid = Instance.new("UIGridLayout", keyboard)
+grid.CellSize = UDim2.new(0.09, 0, 0.2, 0)
+grid.CellPadding = UDim2.new(0.01, 0, 0.02, 0)
+grid.SortOrder = Enum.SortOrder.LayoutOrder
 
 -- TOGGLE BUTTON
 local toggle = Instance.new("TextButton", gui)
 toggle.Size = UDim2.new(0,50,0,50)
-toggle.Position = UDim2.new(0,10,0.6,0)
+toggle.Position = UDim2.new(0,10,1,-270)
 toggle.Text = "⌨"
+toggle.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
 local opened = false
 
 toggle.MouseButton1Click:Connect(function()
     opened = not opened
-    local pos = opened and UDim2.new(0,0,0.7,0) or UDim2.new(0,0,1,0)
+    local pos = opened and UDim2.new(0,0,1,-200) or UDim2.new(0,0,1,0)
     TweenService:Create(keyboard, TweenInfo.new(0.3), {Position = pos}):Play()
 end)
 
@@ -41,7 +50,7 @@ end)
 local currentText = ""
 
 local function updateText()
-    textLabel.Text = currentText
+    textBox.Text = currentText
 end
 
 -- SEND CHAT
@@ -58,63 +67,46 @@ local function sendMessage(msg)
     end
 end
 
--- CREATE BUTTON
-local function createKey(text, x, y)
-    local btn = Instance.new("TextButton", keyboard)
-    btn.Size = UDim2.new(0,40,0,40)
-    btn.Position = UDim2.new(0,x,0,y)
-    btn.Text = text
+-- CREATE KEY FUNCTION
+local function createKey(label, callback)
+    local btn = Instance.new("TextButton")
+    btn.Text = label
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Parent = keyboard
+    btn.BorderSizePixel = 0
 
-    btn.MouseButton1Click:Connect(function()
-        currentText = currentText .. text
+    btn.MouseButton1Click:Connect(callback)
+end
+
+-- LETTER KEYS
+local letters = {
+    "Q","W","E","R","T","Y","U","I","O","P",
+    "A","S","D","F","G","H","J","K","L",
+    "Z","X","C","V","B","N","M"
+}
+
+for _, key in ipairs(letters) do
+    createKey(key, function()
+        currentText = currentText .. key
         updateText()
     end)
 end
 
--- ROW 1
-local keys = {"Q","W","E","R","T","Y","U","I","O","P"}
-for i,v in pairs(keys) do
-    createKey(v, (i-1)*42, 10)
-end
-
--- ROW 2
-keys = {"A","S","D","F","G","H","J","K","L"}
-for i,v in pairs(keys) do
-    createKey(v, (i-1)*42+20, 60)
-end
-
--- ROW 3
-keys = {"Z","X","C","V","B","N","M"}
-for i,v in pairs(keys) do
-    createKey(v, (i-1)*42+60, 110)
-end
-
 -- SPACE
-local space = Instance.new("TextButton", keyboard)
-space.Size = UDim2.new(0,200,0,40)
-space.Position = UDim2.new(0,100,0,160)
-space.Text = "SPACE"
-space.MouseButton1Click:Connect(function()
+createKey("SPACE", function()
     currentText = currentText .. " "
     updateText()
 end)
 
 -- BACKSPACE
-local back = Instance.new("TextButton", keyboard)
-back.Size = UDim2.new(0,80,0,40)
-back.Position = UDim2.new(0,320,0,160)
-back.Text = "DEL"
-back.MouseButton1Click:Connect(function()
+createKey("DEL", function()
     currentText = currentText:sub(1, -2)
     updateText()
 end)
 
 -- ENTER
-local enter = Instance.new("TextButton", keyboard)
-enter.Size = UDim2.new(0,80,0,40)
-enter.Position = UDim2.new(0,10,0,160)
-enter.Text = "ENTER"
-enter.MouseButton1Click:Connect(function()
+createKey("ENTER", function()
     sendMessage(currentText)
     currentText = ""
     updateText()
