@@ -1,4 +1,4 @@
--- KEYBOARD ROBLOX QWERTY LIKE GBOARD (FLOATING + CAPSLOCK + SYMBOL)
+-- KEYBOARD ROBLOX (1234567890 - QWERTYUIOP - ASDFGHJKL - ZXCVBNM)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -11,7 +11,7 @@ gui.Name = "KeyboardUI"
 
 -- MAIN KEYBOARD
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(1,0,0,350)
+main.Size = UDim2.new(1,0,0,380)
 main.Position = UDim2.new(0,0,1,0)
 main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 main.BorderSizePixel = 0
@@ -63,9 +63,9 @@ keyboardContainer.Size = UDim2.new(1,0,1,-55)
 keyboardContainer.Position = UDim2.new(0,0,0,55)
 keyboardContainer.BackgroundTransparency = 1
 
--- ============ BARIS 1 (QWERTYUIOP) ============
+-- ============ BARIS 1 (ANGKA) ============
 local row1 = Instance.new("Frame", keyboardContainer)
-row1.Size = UDim2.new(1,0,0,60)
+row1.Size = UDim2.new(1,0,0,65)
 row1.Position = UDim2.new(0,0,0,5)
 row1.BackgroundTransparency = 1
 
@@ -73,35 +73,45 @@ local row1Layout = Instance.new("UIGridLayout", row1)
 row1Layout.CellSize = UDim2.new(0.09, -2, 1, -4)
 row1Layout.CellPadding = UDim2.new(0,2,0,0)
 
--- ============ BARIS 2 (ASDFGHJKL) ============
+-- ============ BARIS 2 (QWERTYUIOP) ============
 local row2 = Instance.new("Frame", keyboardContainer)
-row2.Size = UDim2.new(1,0,0,60)
-row2.Position = UDim2.new(0,0,0,70)
+row2.Size = UDim2.new(1,0,0,65)
+row2.Position = UDim2.new(0,0,0,75)
 row2.BackgroundTransparency = 1
 
 local row2Layout = Instance.new("UIGridLayout", row2)
 row2Layout.CellSize = UDim2.new(0.09, -2, 1, -4)
 row2Layout.CellPadding = UDim2.new(0,2,0,0)
 
--- ============ BARIS 3 (ZXCVBNM) ============
+-- ============ BARIS 3 (ASDFGHJKL) ============
 local row3 = Instance.new("Frame", keyboardContainer)
-row3.Size = UDim2.new(1,0,0,60)
-row3.Position = UDim2.new(0,0,0,135)
+row3.Size = UDim2.new(1,0,0,65)
+row3.Position = UDim2.new(0,0,0,145)
 row3.BackgroundTransparency = 1
 
 local row3Layout = Instance.new("UIGridLayout", row3)
 row3Layout.CellSize = UDim2.new(0.09, -2, 1, -4)
 row3Layout.CellPadding = UDim2.new(0,2,0,0)
 
--- ============ BARIS 4 (Tombol Khusus) ============
+-- ============ BARIS 4 (ZXCVBNM + Tombol Khusus) ============
 local row4 = Instance.new("Frame", keyboardContainer)
-row4.Size = UDim2.new(1,0,0,60)
-row4.Position = UDim2.new(0,0,0,200)
+row4.Size = UDim2.new(1,0,0,65)
+row4.Position = UDim2.new(0,0,0,215)
 row4.BackgroundTransparency = 1
 
 local row4Layout = Instance.new("UIGridLayout", row4)
-row4Layout.CellSize = UDim2.new(0.18, -2, 1, -4)
+row4Layout.CellSize = UDim2.new(0.09, -2, 1, -4)
 row4Layout.CellPadding = UDim2.new(0,2,0,0)
+
+-- ============ BARIS 5 (Tombol Bawah: CAPS, SYMBOL, SPACE, DEL, CLEAR) ============
+local row5 = Instance.new("Frame", keyboardContainer)
+row5.Size = UDim2.new(1,0,0,65)
+row5.Position = UDim2.new(0,0,0,285)
+row5.BackgroundTransparency = 1
+
+local row5Layout = Instance.new("UIGridLayout", row5)
+row5Layout.CellSize = UDim2.new(0.18, -2, 1, -4)
+row5Layout.CellPadding = UDim2.new(0,2,0,0)
 
 -- FLOATING BUBBLE
 local bubble = Instance.new("TextButton", gui)
@@ -175,46 +185,36 @@ local function sendMessage(msg)
 end
 
 -- FUNGSI MEMBUAT TOMBOL
-local function createButton(parent, text, bgColor, onClick, widthScale)
+local function createButton(parent, text, bgColor, onClick)
     local btn = Instance.new("TextButton", parent)
     btn.Text = text
     btn.BackgroundColor3 = bgColor or Color3.fromRGB(55,55,55)
     btn.TextColor3 = Color3.new(1,1,1)
     btn.TextScaled = true
     btn.Font = Enum.Font.GothamBold
-    
-    if widthScale then
-        btn.Size = UDim2.new(widthScale, 0, 1, -4)
-        local layout = parent:FindFirstChildWhichIsA("UIGridLayout")
-        if layout then
-            layout:Remove()
-        end
-    end
-    
     btn.MouseButton1Click:Connect(onClick)
     return btn
 end
 
--- HURUF
-local row1LettersLower = {"q","w","e","r","t","y","u","i","o","p"}
-local row1LettersUpper = {"Q","W","E","R","T","Y","U","I","O","P"}
-local row2LettersLower = {"a","s","d","f","g","h","j","k","l"}
-local row2LettersUpper = {"A","S","D","F","G","H","J","K","L"}
-local row3LettersLower = {"z","x","c","v","b","n","m"}
-local row3LettersUpper = {"Z","X","C","V","B","N","M"}
+-- DATA TOMBOL
+local numbers = {"1","2","3","4","5","6","7","8","9","0"}
+local row2Lower = {"q","w","e","r","t","y","u","i","o","p"}
+local row2Upper = {"Q","W","E","R","T","Y","U","I","O","P"}
+local row3Lower = {"a","s","d","f","g","h","j","k","l"}
+local row3Upper = {"A","S","D","F","G","H","J","K","L"}
+local row4Lower = {"z","x","c","v","b","n","m"}
+local row4Upper = {"Z","X","C","V","B","N","M"}
 
--- SIMBOL (mode simbol)
+-- SIMBOL
 local symbolRow1 = {"!", "@", "#", "$", "%", "^", "&", "*", "(", ")"}
 local symbolRow2 = {"-", "_", "=", "+", "[", "]", "{", "}", "\\", "|"}
 local symbolRow3 = {";", ":", "'", '"', ",", ".", "<", ">", "/", "?"}
-
--- ANGKA
-local numberRow = {"1","2","3","4","5","6","7","8","9","0"}
+local symbolRow4 = {"1","2","3","4","5","6","7","8","9","0"}
 
 -- Fungsi refresh keyboard
 local function refreshKeyboard()
     -- Hapus semua tombol
-    for _, row in ipairs({row1, row2, row3, row4}) do
+    for _, row in ipairs({row1, row2, row3, row4, row5}) do
         for _, child in ipairs(row:GetChildren()) do
             if child:IsA("TextButton") then
                 child:Destroy()
@@ -223,67 +223,109 @@ local function refreshKeyboard()
     end
     
     if showSymbols then
-        -- MODE SIMBOL
-        for i, sym in ipairs(symbolRow1) do
+        -- ============ MODE SIMBOL ============
+        -- Baris 1: simbol baris 1
+        for _, sym in ipairs(symbolRow1) do
             createButton(row1, sym, Color3.fromRGB(70,70,70), function()
                 currentText = currentText .. sym
                 updateText()
             end)
         end
         
-        for i, sym in ipairs(symbolRow2) do
+        -- Baris 2: simbol baris 2
+        for _, sym in ipairs(symbolRow2) do
             createButton(row2, sym, Color3.fromRGB(70,70,70), function()
                 currentText = currentText .. sym
                 updateText()
             end)
         end
         
-        for i, sym in ipairs(symbolRow3) do
+        -- Baris 3: simbol baris 3
+        for _, sym in ipairs(symbolRow3) do
             createButton(row3, sym, Color3.fromRGB(70,70,70), function()
                 currentText = currentText .. sym
                 updateText()
             end)
         end
-    else
-        -- MODE HURUF (QWERTY)
-        local row1Letters = capsLock and row1LettersUpper or row1LettersLower
-        local row2Letters = capsLock and row2LettersUpper or row2LettersLower
-        local row3Letters = capsLock and row3LettersUpper or row3LettersLower
         
-        for i, letter in ipairs(row1Letters) do
-            createButton(row1, letter, Color3.fromRGB(55,55,55), function()
-                currentText = currentText .. letter
+        -- Baris 4: angka
+        for _, num in ipairs(symbolRow4) do
+            createButton(row4, num, Color3.fromRGB(60,60,80), function()
+                currentText = currentText .. num
                 updateText()
             end)
         end
         
-        for i, letter in ipairs(row2Letters) do
+        -- Baris 5: tombol kembali ke huruf
+        createButton(row5, "ABC", Color3.fromRGB(0,150,150), function()
+            showSymbols = false
+            refreshKeyboard()
+        end)
+        
+        createButton(row5, "SPACE", Color3.fromRGB(70,70,90), function()
+            currentText = currentText .. " "
+            updateText()
+        end)
+        
+        createButton(row5, "⌫", Color3.fromRGB(180,60,60), function()
+            currentText = currentText:sub(1,-2)
+            updateText()
+        end)
+        
+        createButton(row5, "CLEAR", Color3.fromRGB(180,100,60), function()
+            currentText = ""
+            updateText()
+        end)
+        
+    else
+        -- ============ MODE HURUF ============
+        -- Baris 1: ANGKA 1 2 3 4 5 6 7 8 9 0
+        for _, num in ipairs(numbers) do
+            createButton(row1, num, Color3.fromRGB(60,60,80), function()
+                currentText = currentText .. num
+                updateText()
+            end)
+        end
+        
+        -- Baris 2: Q W E R T Y U I O P
+        local lettersRow2 = capsLock and row2Upper or row2Lower
+        for _, letter in ipairs(lettersRow2) do
             createButton(row2, letter, Color3.fromRGB(55,55,55), function()
                 currentText = currentText .. letter
                 updateText()
             end)
         end
         
-        for i, letter in ipairs(row3Letters) do
+        -- Baris 3: A S D F G H J K L
+        local lettersRow3 = capsLock and row3Upper or row3Lower
+        for _, letter in ipairs(lettersRow3) do
             createButton(row3, letter, Color3.fromRGB(55,55,55), function()
                 currentText = currentText .. letter
                 updateText()
             end)
         end
-    end
-    
-    -- ANGKA (selalu di baris 3 atau 4 tergantung mode)
-    if showSymbols then
-        for i, num in ipairs(numberRow) do
-            createButton(row4, num, Color3.fromRGB(60,60,80), function()
-                currentText = currentText .. num
+        
+        -- Baris 4: Z X C V B N M
+        local lettersRow4 = capsLock and row4Upper or row4Lower
+        for _, letter in ipairs(lettersRow4) do
+            createButton(row4, letter, Color3.fromRGB(55,55,55), function()
+                currentText = currentText .. letter
                 updateText()
             end)
         end
-    else
-        -- Tombol tambahan di baris 4
-        -- Tombol CAPS
-        createButton(row4, "CAPS", capsLock and Color3.fromRGB(0,150,0) or Color3.fromRGB(80,80,80), function()
+        
+        -- Tambahkan tombol kosong di baris 4 untuk melengkapi 10 slot (karena ZXCVBNM cuma 7)
+        for i = 1, 3 do
+            local emptyBtn = Instance.new("TextButton", row4)
+            emptyBtn.Text = ""
+            emptyBtn.BackgroundColor3 = Color3.fromRGB(18,18,18)
+            emptyBtn.TextScaled = true
+            emptyBtn.AutoButtonColor = false
+        end
+        
+        -- Baris 5: CAPS, SYMBOL, SPACE, DEL, CLEAR
+        -- CAPS
+        createButton(row5, "CAPS", capsLock and Color3.fromRGB(0,150,0) or Color3.fromRGB(80,80,80), function()
             capsLock = not capsLock
             if capsLock then
                 capsLockLabel.Text = "ABC"
@@ -293,75 +335,31 @@ local function refreshKeyboard()
                 capsLockLabel.BackgroundColor3 = Color3.fromRGB(60,60,60)
             end
             refreshKeyboard()
-        end, 0.15)
+        end)
         
-        -- Tombol SYMBOL
-        createButton(row4, "?!#", Color3.fromRGB(80,80,80), function()
+        -- SYMBOL
+        createButton(row5, "?!#", Color3.fromRGB(80,80,80), function()
             showSymbols = true
             refreshKeyboard()
-        end, 0.15)
+        end)
         
         -- SPACE
-        createButton(row4, "SPACE", Color3.fromRGB(70,70,90), function()
+        createButton(row5, "SPACE", Color3.fromRGB(70,70,90), function()
             currentText = currentText .. " "
             updateText()
-        end, 0.3)
+        end)
         
         -- DEL
-        createButton(row4, "⌫", Color3.fromRGB(180,60,60), function()
+        createButton(row5, "⌫", Color3.fromRGB(180,60,60), function()
             currentText = currentText:sub(1,-2)
             updateText()
-        end, 0.12)
+        end)
         
         -- CLEAR
-        createButton(row4, "CLEAR", Color3.fromRGB(180,100,60), function()
+        createButton(row5, "CLEAR", Color3.fromRGB(180,100,60), function()
             currentText = ""
             updateText()
-        end, 0.12)
-        
-        -- Tombol kembali ke huruf jika di mode simbol (tidak dipakai di mode huruf)
-    end
-    
-    -- Tombol khusus untuk mode simbol (kembali ke huruf)
-    if showSymbols then
-        -- Hapus tombol angka yang sudah dibuat di row4
-        for _, child in ipairs(row4:GetChildren()) do
-            if child:IsA("TextButton") then
-                child:Destroy()
-            end
-        end
-        
-        -- Tombol ABC (kembali ke huruf)
-        createButton(row4, "ABC", Color3.fromRGB(0,150,150), function()
-            showSymbols = false
-            refreshKeyboard()
-        end, 0.15)
-        
-        -- SPACE
-        createButton(row4, "SPACE", Color3.fromRGB(70,70,90), function()
-            currentText = currentText .. " "
-            updateText()
-        end, 0.35)
-        
-        -- DEL
-        createButton(row4, "⌫", Color3.fromRGB(180,60,60), function()
-            currentText = currentText:sub(1,-2)
-            updateText()
-        end, 0.15)
-        
-        -- CLEAR
-        createButton(row4, "CLEAR", Color3.fromRGB(180,100,60), function()
-            currentText = ""
-            updateText()
-        end, 0.15)
-        
-        -- Angka (tambahkan setelah tombol khusus)
-        for i, num in ipairs(numberRow) do
-            createButton(row4, num, Color3.fromRGB(60,60,80), function()
-                currentText = currentText .. num
-                updateText()
-            end)
-        end
+        end)
     end
 end
 
@@ -373,7 +371,7 @@ sendBtn.MouseButton1Click:Connect(function()
 end)
 
 bubble.MouseButton1Click:Connect(function()
-    local targetPos = main.Position.Y.Offset == 0 and -350 or 0
+    local targetPos = main.Position.Y.Offset == 0 and -380 or 0
     TweenService:Create(main, TweenInfo.new(0.3), {
         Position = UDim2.new(0,0,1,targetPos)
     }):Play()
