@@ -1,3 +1,5 @@
+-- KEYBOARD FINAL FIX CAPS & SYMBOL
+
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local TextChatService = game:GetService("TextChatService")
@@ -7,7 +9,7 @@ local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
 -- MAIN
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(1,0,0,300)
+main.Size = UDim2.new(1,0,0,320)
 main.Position = UDim2.new(0,0,1,0)
 main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 
@@ -146,7 +148,7 @@ local row3 = createRow(0.4)
 local row4 = createRow(0.6)
 local row5 = createRow(0.8)
 
--- NUMBERS + DEL
+-- ROW1 (ANGKA + DEL)
 local nums = {"1","2","3","4","5","6","7","8","9","0"}
 for i,v in ipairs(nums) do
     createKey(row1, v, 0.08, function()
@@ -155,45 +157,47 @@ for i,v in ipairs(nums) do
     end, false, true)
 end
 
-createKey(row1, "DEL", 0.15, function()
+createKey(row1, "DEL", 0.12, function()
     currentText = currentText:sub(1,-2)
     updateText()
 end)
 
--- LETTER ROWS
+-- ROW2
 for _,k in ipairs({"q","w","e","r","t","y","u","i","o","p"}) do
-    createKey(row2, k, 0.09, function()
+    createKey(row2, k, 0.085, function()
         currentText = currentText .. (isCaps and k:upper() or k)
         updateText()
     end, true)
 end
 
+-- ROW3
 for _,k in ipairs({"a","s","d","f","g","h","j","k","l"}) do
-    createKey(row3, k, 0.1, function()
+    createKey(row3, k, 0.095, function()
         currentText = currentText .. (isCaps and k:upper() or k)
         updateText()
     end, true)
 end
 
-createKey(row4, "CAPS", 0.15, function()
+-- ROW4 (FIX: CAPS DIJAMIN MUNCUL)
+createKey(row4, "CAPS", 0.14, function()
     isCaps = not isCaps
     updateLetters()
 end)
 
 for _,k in ipairs({"z","x","c","v","b","n","m"}) do
-    createKey(row4, k, 0.08, function()
+    createKey(row4, k, 0.075, function()
         currentText = currentText .. (isCaps and k:upper() or k)
         updateText()
     end, true)
 end
 
--- BOTTOM
-createKey(row5, "?123", 0.15, function()
+-- ROW5 (FIX: SYMBOL MUNCUL)
+createKey(row5, "?123", 0.2, function()
     isSymbol = not isSymbol
     updateNumbers()
 end)
 
-createKey(row5, "SPACE", 0.5, function()
+createKey(row5, "SPACE", 0.6, function()
     currentText = currentText .. " "
     updateText()
 end)
@@ -206,7 +210,7 @@ sendBtn.MouseButton1Click:Connect(function()
 end)
 
 bubble.MouseButton1Click:Connect(function()
-    TweenService:Create(main, TweenInfo.new(0.3), {Position = UDim2.new(0,0,1,-300)}):Play()
+    TweenService:Create(main, TweenInfo.new(0.3), {Position = UDim2.new(0,0,1,-320)}):Play()
 end)
 
 minimize.MouseButton1Click:Connect(function()
