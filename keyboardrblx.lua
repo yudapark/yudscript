@@ -11,7 +11,7 @@ gui.Name = "KeyboardUI"
 
 -- MAIN KEYBOARD
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(1,0,0,280)
+main.Size = UDim2.new(1,0,0,320)
 main.Position = UDim2.new(0,0,1,0)
 main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 main.BorderSizePixel = 0
@@ -23,7 +23,7 @@ topBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
 
 -- INPUT TEXT
 local textBox = Instance.new("TextLabel", topBar)
-textBox.Size = UDim2.new(0.5, -10, 1, -10)
+textBox.Size = UDim2.new(0.45, -10, 1, -10)
 textBox.Position = UDim2.new(0,10,0,5)
 textBox.BackgroundColor3 = Color3.fromRGB(45,45,45)
 textBox.TextColor3 = Color3.new(1,1,1)
@@ -33,18 +33,17 @@ textBox.Text = ""
 
 -- CAPSLOCK INDICATOR
 local capsLockLabel = Instance.new("TextLabel", topBar)
-capsLockLabel.Size = UDim2.new(0.1, 0, 0.6, 0)
-capsLockLabel.Position = UDim2.new(0.5, 5, 0.2, 0)
+capsLockLabel.Size = UDim2.new(0.08, 0, 0.6, 0)
+capsLockLabel.Position = UDim2.new(0.47, 5, 0.2, 0)
 capsLockLabel.BackgroundColor3 = Color3.fromRGB(60,60,60)
 capsLockLabel.TextColor3 = Color3.new(1,1,1)
-capsLockLabel.Text = "ABC"
+capsLockLabel.Text = "abc"
 capsLockLabel.TextScaled = true
-capsLockLabel.Visible = false
 
 -- SEND BUTTON
 local sendBtn = Instance.new("TextButton", topBar)
-sendBtn.Size = UDim2.new(0.15, -5, 1, -10)
-sendBtn.Position = UDim2.new(0.6, 5, 0,5)
+sendBtn.Size = UDim2.new(0.13, -5, 1, -10)
+sendBtn.Position = UDim2.new(0.57, 5, 0,5)
 sendBtn.Text = "KIRIM"
 sendBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
 sendBtn.TextColor3 = Color3.new(1,1,1)
@@ -65,8 +64,8 @@ keyboard.Position = UDim2.new(0,0,0,50)
 keyboard.BackgroundTransparency = 1
 
 local grid = Instance.new("UIGridLayout", keyboard)
-grid.CellSize = UDim2.new(0.1, -5, 0.2, -5)
-grid.CellPadding = UDim2.new(0,5,0,5)
+grid.CellSize = UDim2.new(0.09, -3, 0.18, -5)
+grid.CellPadding = UDim2.new(0,4,0,4)
 
 -- FLOATING BUBBLE
 local bubble = Instance.new("TextButton", gui)
@@ -123,8 +122,8 @@ end)
 
 -- TEXT
 local currentText = ""
-local capsLock = false  -- false = huruf kecil, true = huruf besar
-local showSymbols = false  -- false = huruf, true = simbol
+local capsLock = false
+local showSymbols = false
 
 local function updateText()
     textBox.Text = currentText
@@ -147,119 +146,98 @@ local function sendMessage(msg)
 end
 
 -- KEY FUNCTION
-local function key(label, func)
+local function key(label, bgColor, textColor, func)
     local btn = Instance.new("TextButton")
     btn.Text = label
-    btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-    btn.TextColor3 = Color3.new(1,1,1)
+    btn.BackgroundColor3 = bgColor or Color3.fromRGB(50,50,50)
+    btn.TextColor3 = textColor or Color3.new(1,1,1)
     btn.TextScaled = true
     btn.Parent = keyboard
 
     btn.MouseButton1Click:Connect(func)
 end
 
--- HURUF DENGAN CAPSLOCK
+-- HURUF
 local lettersLower = {
-"q","w","e","r","t","y","u","i","o","p",
-"a","s","d","f","g","h","j","k","l",
-"z","x","c","v","b","n","m"
+    "q","w","e","r","t","y","u","i","o","p",
+    "a","s","d","f","g","h","j","k","l",
+    "z","x","c","v","b","n","m"
 }
 
 local lettersUpper = {
-"Q","W","E","R","T","Y","U","I","O","P",
-"A","S","D","F","G","H","J","K","L",
-"Z","X","C","V","B","N","M"
+    "Q","W","E","R","T","Y","U","I","O","P",
+    "A","S","D","F","G","H","J","K","L",
+    "Z","X","C","V","B","N","M"
 }
 
--- TOMBOL CAPSLOCK
-key("CAPS", function()
-    capsLock = not capsLock
-    capsLockLabel.Visible = capsLock
-    if capsLock then
-        capsLockLabel.Text = "ABC"
-        capsLockLabel.BackgroundColor3 = Color3.fromRGB(0,170,0)
-    else
-        capsLockLabel.Text = "abc"
-        capsLockLabel.BackgroundColor3 = Color3.fromRGB(60,60,60)
-    end
-    -- Refresh keyboard untuk mode simbol juga
-    refreshKeyboard()
-end)
+-- SIMBOL
+local symbols = {
+    "!", "@", "#", "$", "%", "^", "&", "*", "(", ")",
+    "-", "_", "=", "+", "[", "]", "{", "}", "\\", "|",
+    ";", ":", "'", '"', ",", ".", "<", ">", "/", "?"
+}
 
--- TOMBOL SYMBOL
-key("?!#", function()
-    showSymbols = not showSymbols
-    refreshKeyboard()
-end)
-
--- TOMBOL KHUSUS (SPACE, DEL, CLEAR) tetap ada di semua mode
-local specialButtons = {}
+-- ANGKA
+local numbers = {"1","2","3","4","5","6","7","8","9","0"}
 
 -- Fungsi refresh keyboard
 local function refreshKeyboard()
-    -- Hapus semua tombol kecuali special buttons (kita simpan dulu)
+    -- Hapus semua tombol
     for _, child in ipairs(keyboard:GetChildren()) do
-        if child:IsA("TextButton") and child ~= specialButtons[1] and child ~= specialButtons[2] and child ~= specialButtons[3] then
+        if child:IsA("TextButton") then
             child:Destroy()
         end
     end
     
     if showSymbols then
-        -- MODE SIMBOL
-        local symbols = {
-            "!", "@", "#", "$", "%", "^", "&", "*", "(", ")",
-            "-", "_", "=", "+", "[", "]", "{", "}", "\\", "|",
-            ";", ":", "'", '"', ",", ".", "<", ">", "/", "?"
-        }
-        for _, sym in ipairs(symbols) do
-            key(sym, function()
+        -- MODE SIMBOL (2 baris pertama simbol, lalu angka, lalu special)
+        for i, sym in ipairs(symbols) do
+            key(sym, Color3.fromRGB(70,70,70), Color3.new(1,1,1), function()
                 currentText = currentText .. sym
                 updateText()
             end)
+            if i == 20 then
+                -- setelah 20 simbol, tambahkan baris kosong (skip)
+            end
         end
     else
         -- MODE HURUF (dengan caps lock)
         local lettersToUse = capsLock and lettersUpper or lettersLower
         for _, letter in ipairs(lettersToUse) do
-            key(letter, function()
+            key(string.upper(letter) or letter, Color3.fromRGB(50,50,50), Color3.new(1,1,1), function()
                 currentText = currentText .. letter
                 updateText()
             end)
         end
     end
     
-    -- ANGKA (selalu ada di semua mode)
-    for i=1,9 do
-        key(tostring(i), function()
-            currentText = currentText .. i
+    -- ANGKA (selalu ada)
+    for _, num in ipairs(numbers) do
+        key(num, Color3.fromRGB(60,60,80), Color3.new(1,1,1), function()
+            currentText = currentText .. num
             updateText()
         end)
     end
-    key("0", function()
-        currentText = currentText .. "0"
-        updateText()
-    end)
     
-    -- TOMBOL KHUSUS (SPACE, DEL, CLEAR, CAPS, SYMBOL)
-    key("SPACE", function()
+    -- TOMBOL KHUSUS
+    key("SPACE", Color3.fromRGB(80,80,80), Color3.new(1,1,1), function()
         currentText = currentText .. " "
         updateText()
     end)
     
-    key("DEL", function()
+    key("DEL", Color3.fromRGB(180,60,60), Color3.new(1,1,1), function()
         currentText = currentText:sub(1,-2)
         updateText()
     end)
     
-    key("CLEAR", function()
+    key("CLEAR", Color3.fromRGB(180,100,60), Color3.new(1,1,1), function()
         currentText = ""
         updateText()
     end)
     
-    -- CAPS lock dan Symbol toggle tetap ada
-    key("CAPS", function()
+    -- TOMBOL CAPSLOCK (warna hijau jika aktif)
+    key("CAPS", capsLock and Color3.fromRGB(0,150,0) or Color3.fromRGB(80,80,80), Color3.new(1,1,1), function()
         capsLock = not capsLock
-        capsLockLabel.Visible = capsLock
         if capsLock then
             capsLockLabel.Text = "ABC"
             capsLockLabel.BackgroundColor3 = Color3.fromRGB(0,170,0)
@@ -270,7 +248,8 @@ local function refreshKeyboard()
         refreshKeyboard()
     end)
     
-    key("?!#", function()
+    -- TOMBOL SYMBOL (warna biru jika aktif)
+    key(showSymbols and "ABC" or "?!#", showSymbols and Color3.fromRGB(0,150,150) or Color3.fromRGB(80,80,80), Color3.new(1,1,1), function()
         showSymbols = not showSymbols
         refreshKeyboard()
     end)
@@ -285,7 +264,7 @@ end)
 
 bubble.MouseButton1Click:Connect(function()
     TweenService:Create(main, TweenInfo.new(0.3), {
-        Position = UDim2.new(0,0,1,-280)
+        Position = UDim2.new(0,0,1,-320)
     }):Play()
 end)
 
