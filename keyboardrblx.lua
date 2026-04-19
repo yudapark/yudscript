@@ -1,9 +1,8 @@
--- KEYBOARD ROBLOX GBOARD STYLE FINAL
+-- KEYBOARD ROBLOX FINAL QWERTY FIX
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local TextChatService = game:GetService("TextChatService")
-local UIS = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -27,12 +26,14 @@ textBox.TextColor3 = Color3.new(1,1,1)
 textBox.TextScaled = true
 textBox.TextXAlignment = Enum.TextXAlignment.Left
 
+-- KIRIM (INI YANG DIPAKE)
 local sendBtn = Instance.new("TextButton", topBar)
 sendBtn.Size = UDim2.new(0.2,-5,1,-10)
 sendBtn.Position = UDim2.new(0.6,5,0,5)
 sendBtn.Text = "KIRIM"
 sendBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
 
+-- MINIMIZE
 local minimize = Instance.new("TextButton", topBar)
 minimize.Size = UDim2.new(0.2,-5,1,-10)
 minimize.Position = UDim2.new(0.8,5,0,5)
@@ -53,7 +54,7 @@ bubble.Text = "⌨"
 bubble.BackgroundColor3 = Color3.fromRGB(0,170,255)
 bubble.Active = true
 
--- DRAG
+-- DRAG FIX
 local dragging = false
 local dragStart, startPos
 
@@ -80,6 +81,7 @@ local currentText = ""
 local isCaps = false
 local isSymbol = false
 local letterButtons = {}
+local numberButtons = {}
 
 local function updateText()
     textBox.Text = currentText
@@ -91,7 +93,16 @@ local function updateLetters()
     end
 end
 
--- SEND
+local function updateNumbers()
+    local nums = {"1","2","3","4","5","6","7","8","9","0"}
+    local syms = {"!","@","#","$","%","^","&","*","(",")"}
+
+    for i,btn in ipairs(numberButtons) do
+        btn.Text = isSymbol and syms[i] or nums[i]
+    end
+end
+
+-- SEND CHAT
 local function sendMessage(msg)
     if msg == "" then return end
     if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
@@ -120,7 +131,7 @@ local function createRow(y)
 end
 
 -- CREATE KEY
-local function createKey(parent, text, width, func, saveLetter)
+local function createKey(parent, text, width, func, saveLetter, saveNumber)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(width,0,1,0)
     btn.Text = text
@@ -130,9 +141,8 @@ local function createKey(parent, text, width, func, saveLetter)
     btn.TextScaled = true
     btn.Parent = parent
 
-    if saveLetter then
-        table.insert(letterButtons, btn)
-    end
+    if saveLetter then table.insert(letterButtons, btn) end
+    if saveNumber then table.insert(numberButtons, btn) end
 
     btn.MouseButton1Click:Connect(func)
 end
@@ -142,19 +152,23 @@ local row1 = createRow(0)
 local row2 = createRow(0.2)
 local row3 = createRow(0.4)
 local row4 = createRow(0.6)
+local row5 = createRow(0.8)
 
--- NUMBERS
+-- ROW1 (ANGKA + DEL)
 local nums = {"1","2","3","4","5","6","7","8","9","0"}
-local syms = {"!","@","#","$","%","^","&","*","(",")"}
-
 for i,v in ipairs(nums) do
     createKey(row1, v, 0.08, function()
-        currentText = currentText .. (isSymbol and syms[i] or v)
+        currentText = currentText .. numberButtons[i].Text
         updateText()
-    end)
+    end, false, true)
 end
 
--- ROW2 LETTERS
+createKey(row1, "DEL", 0.15, function()
+    currentText = currentText:sub(1,-2)
+    updateText()
+end)
+
+-- ROW2
 for _,k in ipairs({"q","w","e","r","t","y","u","i","o","p"}) do
     createKey(row2, k, 0.09, function()
         local val = isCaps and k:upper() or k
@@ -163,7 +177,7 @@ for _,k in ipairs({"q","w","e","r","t","y","u","i","o","p"}) do
     end, true)
 end
 
--- ROW3 LETTERS
+-- ROW3
 for _,k in ipairs({"a","s","d","f","g","h","j","k","l"}) do
     createKey(row3, k, 0.1, function()
         local val = isCaps and k:upper() or k
@@ -172,7 +186,7 @@ for _,k in ipairs({"a","s","d","f","g","h","j","k","l"}) do
     end, true)
 end
 
--- ROW4 (CAPS + LETTERS + DEL)
+-- ROW4
 createKey(row4, "CAPS", 0.15, function()
     isCaps = not isCaps
     updateLetters()
@@ -186,16 +200,10 @@ for _,k in ipairs({"z","x","c","v","b","n","m"}) do
     end, true)
 end
 
-createKey(row4, "DEL", 0.15, function()
-    currentText = currentText:sub(1,-2)
-    updateText()
-end)
-
--- ROW5 (BOTTOM)
-local row5 = createRow(0.8)
-
+-- ROW5
 createKey(row5, "?123", 0.15, function()
     isSymbol = not isSymbol
+    updateNumbers()
 end)
 
 createKey(row5, "SPACE", 0.5, function()
@@ -203,13 +211,13 @@ createKey(row5, "SPACE", 0.5, function()
     updateText()
 end)
 
-createKey(row5, "SEND", 0.2, function()
+-- BUTTONS
+sendBtn.MouseButton1Click:Connect(function()
     sendMessage(currentText)
     currentText = ""
     updateText()
 end)
 
--- BUTTON ACTION
 bubble.MouseButton1Click:Connect(function()
     TweenService:Create(main, TweenInfo.new(0.3), {
         Position = UDim2.new(0,0,1,-300)
