@@ -1,7 +1,3 @@
--- Keyboard.lua - Mobile External Keyboard for Roblox Chat (Executor Script)
--- Optimized for Android/Mobile, GUI-based keyboard with bubble toggle, maximize/minimize
--- Paste into executor and run. Works in most games with chat enabled.
-
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
