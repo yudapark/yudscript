@@ -1,4 +1,4 @@
--- KEYBOARD FINAL FIX CAPS & SYMBOL
+-- KEYBOARD FINAL QWERTY + SIZE RAPI
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -9,13 +9,13 @@ local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
 -- MAIN
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(1,0,0,320)
+main.Size = UDim2.new(1,0,0,280)
 main.Position = UDim2.new(0,0,1,0)
 main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 
 -- TOP BAR
 local topBar = Instance.new("Frame", main)
-topBar.Size = UDim2.new(1,0,0,50)
+topBar.Size = UDim2.new(1,0,0,45)
 topBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
 
 local textBox = Instance.new("TextLabel", topBar)
@@ -40,18 +40,18 @@ minimize.BackgroundColor3 = Color3.fromRGB(200,80,80)
 
 -- KEYBOARD
 local keyboard = Instance.new("Frame", main)
-keyboard.Size = UDim2.new(1,0,1,-50)
-keyboard.Position = UDim2.new(0,0,0,50)
+keyboard.Size = UDim2.new(1,0,1,-45)
+keyboard.Position = UDim2.new(0,0,0,45)
 
 -- BUBBLE
 local bubble = Instance.new("TextButton", gui)
-bubble.Size = UDim2.new(0,60,0,60)
+bubble.Size = UDim2.new(0,55,0,55)
 bubble.Position = UDim2.new(0,50,0.5,0)
 bubble.Text = "⌨"
 bubble.BackgroundColor3 = Color3.fromRGB(0,170,255)
 bubble.Active = true
 
--- DRAG FIX
+-- DRAG
 local dragging = false
 local dragStart, startPos
 
@@ -110,7 +110,7 @@ local function sendMessage(msg)
     end
 end
 
--- ROW HELPER
+-- ROW
 local function createRow(y)
     local row = Instance.new("Frame", keyboard)
     row.Size = UDim2.new(1,0,0.2,0)
@@ -119,7 +119,7 @@ local function createRow(y)
     local layout = Instance.new("UIListLayout", row)
     layout.FillDirection = Enum.FillDirection.Horizontal
     layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    layout.Padding = UDim.new(0,5)
+    layout.Padding = UDim.new(0,3)
 
     return row
 end
@@ -148,10 +148,10 @@ local row3 = createRow(0.4)
 local row4 = createRow(0.6)
 local row5 = createRow(0.8)
 
--- ROW1 (ANGKA + DEL)
+-- ANGKA
 local nums = {"1","2","3","4","5","6","7","8","9","0"}
 for i,v in ipairs(nums) do
-    createKey(row1, v, 0.08, function()
+    createKey(row1, v, 0.07, function()
         currentText = currentText .. numberButtons[i].Text
         updateText()
     end, false, true)
@@ -162,47 +162,45 @@ createKey(row1, "DEL", 0.12, function()
     updateText()
 end)
 
--- ROW2
+-- QWERTY
 for _,k in ipairs({"q","w","e","r","t","y","u","i","o","p"}) do
-    createKey(row2, k, 0.085, function()
+    createKey(row2, k, 0.075, function()
         currentText = currentText .. (isCaps and k:upper() or k)
         updateText()
     end, true)
 end
 
--- ROW3
 for _,k in ipairs({"a","s","d","f","g","h","j","k","l"}) do
-    createKey(row3, k, 0.095, function()
+    createKey(row3, k, 0.085, function()
         currentText = currentText .. (isCaps and k:upper() or k)
         updateText()
     end, true)
 end
 
--- ROW4 (FIX: CAPS DIJAMIN MUNCUL)
-createKey(row4, "CAPS", 0.14, function()
+createKey(row4, "CAPS", 0.13, function()
     isCaps = not isCaps
     updateLetters()
 end)
 
 for _,k in ipairs({"z","x","c","v","b","n","m"}) do
-    createKey(row4, k, 0.075, function()
+    createKey(row4, k, 0.07, function()
         currentText = currentText .. (isCaps and k:upper() or k)
         updateText()
     end, true)
 end
 
--- ROW5 (FIX: SYMBOL MUNCUL)
-createKey(row5, "?123", 0.2, function()
+-- BAWAH
+createKey(row5, "?123", 0.18, function()
     isSymbol = not isSymbol
     updateNumbers()
 end)
 
-createKey(row5, "SPACE", 0.6, function()
+createKey(row5, "SPACE", 0.55, function()
     currentText = currentText .. " "
     updateText()
 end)
 
--- BUTTONS
+-- BUTTON
 sendBtn.MouseButton1Click:Connect(function()
     sendMessage(currentText)
     currentText = ""
@@ -210,7 +208,7 @@ sendBtn.MouseButton1Click:Connect(function()
 end)
 
 bubble.MouseButton1Click:Connect(function()
-    TweenService:Create(main, TweenInfo.new(0.3), {Position = UDim2.new(0,0,1,-320)}):Play()
+    TweenService:Create(main, TweenInfo.new(0.3), {Position = UDim2.new(0,0,1,-280)}):Play()
 end)
 
 minimize.MouseButton1Click:Connect(function()
