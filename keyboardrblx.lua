@@ -1,8 +1,11 @@
+-- Keyboard.lua - Fixed Mobile External Keyboard for Roblox Chat (Executor Script)
+-- Bugfix: Bubble toggle now properly shows/hides keyboard with animations
+-- Optimized for Android/Mobile. Paste into executor.
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local GuiService = game:GetService("GuiService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -14,7 +17,7 @@ screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = playerGui
 
--- Bubble Button (minimized state)
+-- Bubble Button (always visible when closed)
 local bubbleFrame = Instance.new("Frame")
 bubbleFrame.Name = "Bubble"
 bubbleFrame.Size = UDim2.new(0, 80, 0, 80)
@@ -36,14 +39,14 @@ bubbleText.TextScaled = true
 bubbleText.Font = Enum.Font.GothamBold
 bubbleText.Parent = bubbleFrame
 
--- Main Keyboard Frame (maximized)
+-- Main Keyboard Frame (starts offscreen)
 local keyboardFrame = Instance.new("Frame")
 keyboardFrame.Name = "Keyboard"
 keyboardFrame.Size = UDim2.new(1, 0, 0.6, 0)
-keyboardFrame.Position = UDim2.new(0, 0, 0.4, 0)
+keyboardFrame.Position = UDim2.new(0, 0, 1.1, 0)  -- Offscreen initially
 keyboardFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 keyboardFrame.BorderSizePixel = 0
-keyboardFrame.Visible = false
+keyboardFrame.Visible = true  -- Visible but offscreen
 keyboardFrame.Parent = screenGui
 
 local keyboardCorner = Instance.new("UICorner")
@@ -52,7 +55,6 @@ keyboardCorner.Parent = keyboardFrame
 
 -- Minimize Button
 local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Name = "Minimize"
 minimizeBtn.Size = UDim2.new(0.08, 0, 0.15, 0)
 minimizeBtn.Position = UDim2.new(0.92, 0, 0, 0)
 minimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
@@ -67,15 +69,14 @@ local minCorner = Instance.new("UICorner")
 minCorner.CornerRadius = UDim.new(0, 8)
 minCorner.Parent = minimizeBtn
 
--- Input Display (simulates chat input)
+-- Input Display
 local inputBox = Instance.new("TextBox")
-inputBox.Name = "InputBox"
 inputBox.Size = UDim2.new(0.9, 0, 0.15, 0)
 inputBox.Position = UDim2.new(0.05, 0, 0, 0)
 inputBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 inputBox.BorderSizePixel = 0
 inputBox.Text = ""
-inputBox.PlaceholderText = "Type here (sends to chat on Enter)"
+inputBox.PlaceholderText = "Type here (send to chat)"
 inputBox.TextColor3 = Color3.new(1, 1, 1)
 inputBox.TextScaled = true
 inputBox.Font = Enum.Font.Gotham
@@ -88,7 +89,6 @@ inputCorner.CornerRadius = UDim.new(0, 8)
 inputCorner.Parent = inputBox
 
 local sendBtn = Instance.new("TextButton")
-sendBtn.Name = "Send"
 sendBtn.Size = UDim2.new(0.23, 0, 0.15, 0)
 sendBtn.Position = UDim2.new(0.72, 0, 0, 0)
 sendBtn.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
@@ -103,7 +103,7 @@ local sendCorner = Instance.new("UICorner")
 sendCorner.CornerRadius = UDim.new(0, 8)
 sendCorner.Parent = sendBtn
 
--- Keyboard Layout (QWERTY for mobile - 3 rows simplified)
+-- Keyboard Layout
 local rows = {
     {"Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"},
     {"A", "S", "D", "F", "G", "H", "J", "K", "L"},
@@ -111,7 +111,7 @@ local rows = {
 }
 
 local keyY = 0.22
-for rowIdx, row in ipairs(rows) do
+for _, row in ipairs(rows) do
     local rowFrame = Instance.new("Frame")
     rowFrame.Size = UDim2.new(1, -20, 0, 60)
     rowFrame.Position = UDim2.new(0, 10, keyY, 0)
@@ -130,27 +130,29 @@ for rowIdx, row in ipairs(rows) do
         keyBtn.TextScaled = true
         keyBtn.Font = Enum.Font.GothamSemibold
         keyBtn.Parent = rowFrame
-        
+
         local keyCorner = Instance.new("UICorner")
         keyCorner.CornerRadius = UDim.new(0, 6)
         keyCorner.Parent = keyBtn
-        
-        -- Key press tween
-        keyBtn.MouseButton1Click:Connect(function()
+
+        -- Visual feedback
+        keyBtn.MouseButton1Down:Connect(function()
             keyBtn.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
-            wait(0.1)
+        end)
+        keyBtn.MouseButton1Up:Connect(function()
             keyBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
         end)
-        
-        -- Handle key input
-        keyBtn.MouseButton1Down:Connect(function()
+
+        -- Input logic
+        keyBtn.Activated:Connect(function()
             local text = keyBtn.Text
             if text == "⌫" then
-                inputBox.Text = string.sub(inputBox.Text, 1, -2)
-            elseif text == "↵" or text == "Enter" then
-                -- Send to chat (simulate chat send)
+                inputBox.Text = inputBox.Text:sub(1, -2)
+            elseif text == "↵" then
                 if inputBox.Text ~= "" then
-                    game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(inputBox.Text, "All")
+                    pcall(function()
+                        game:GetService("ReplicatedStorage"):WaitForChild("DefaultChatSystemChatEvents", 5).SayMessageRequest:FireServer(inputBox.Text, "All")
+                    end)
                     inputBox.Text = ""
                 end
             elseif text == " " then
@@ -165,50 +167,52 @@ for rowIdx, row in ipairs(rows) do
     keyY = keyY + 0.18
 end
 
--- Animations
-local showTween = TweenService:Create(keyboardFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Position = UDim2.new(0, 0, 0.4, 0), Size = UDim2.new(1, 0, 0.6, 0)})
-local hideTween = TweenService:Create(keyboardFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Position = UDim2.new(0, 0, 1.1, 0), Size = UDim2.new(1, 0, 0, 0)})
+-- Fixed Animations & Toggle
+local showInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+local hideInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
 
--- Toggle functions
-local isOpen = false
-local function toggleKeyboard()
-    isOpen = not isOpen
-    bubbleFrame.Visible = not isOpen
-    
-    if isOpen then
-        showTween:Play()
-    else
-        hideTween:Play()
-    end
+local function openKeyboard()
+    bubbleFrame.Visible = false
+    local showTween = TweenService:Create(keyboardFrame, showInfo, {
+        Position = UDim2.new(0, 0, 0.4, 0),
+        Size = UDim2.new(1, 0, 0.6, 0)
+    })
+    showTween:Play()
+    inputBox:CaptureFocus()
 end
 
+local function closeKeyboard()
+    local hideTween = TweenService:Create(keyboardFrame, hideInfo, {
+        Position = UDim2.new(0, 0, 1.1, 0),
+        Size = UDim2.new(1, 0, 0.6, 0)
+    })
+    hideTween:Play()
+    hideTween.Completed:Connect(function()
+        bubbleFrame.Visible = true
+    end)
+end
+
+-- Event connections
 bubbleFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        toggleKeyboard()
+        openKeyboard()
     end
 end)
 
-minimizeBtn.MouseButton1Click:Connect(toggleKeyboard)
+minimizeBtn.Activated:Connect(closeKeyboard)
 
-sendBtn.MouseButton1Click:Connect(function()
+sendBtn.Activated:Connect(function()
     if inputBox.Text ~= "" then
-        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(inputBox.Text, "All")
+        pcall(function()
+            game:GetService("ReplicatedStorage"):WaitForChild("DefaultChatSystemChatEvents", 5).SayMessageRequest:FireServer(inputBox.Text, "All")
+        end)
         inputBox.Text = ""
     end
 end)
 
--- Mobile touch optimization
-UserInputService.TouchEnabled = true
+print("Fixed External Mobile Keyboard loaded! Tap blue bubble to open.")
+print("Bugfix: Proper toggle animations, no disappearing issues.")
 
--- Auto-focus on open (optional)
-keyboardFrame:GetPropertyChangedSignal("Visible"):Connect(function()
-    if keyboardFrame.Visible then
-        inputBox:CaptureFocus()
-    end
-end)
-
-print("External Mobile Keyboard loaded! Tap blue bubble to open.")
-
--- Keep alive
-while wait(1) do end
+-- Keep script running
+game:GetService("RunService").Heartbeat:Wait()
 
