@@ -1,36 +1,32 @@
+-- External Keyboard Mobile Fixed 2026
+loadstring([[ 
 -- =============================================
---   EXTERNAL KEYBOARD MOBILE ROBLOX (Android)
---   Dibuat khusus buat kamu
+--   EXTERNAL KEYBOARD MOBILE ROBLOX (Android) - FIXED
 -- =============================================
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- ================== CREATE SCREEN GUI ==================
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ExternalKeyboardGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- ================== FUNGSI DRAG (bisa di-drag) ==================
-local function makeDraggable(dragObject, targetObject)
-    local dragging = false
-    local dragInput = nil
-    local dragStart = nil
-    local startPos = nil
+-- ================== DRAG FUNCTION (Full Dragable + Boundary) ==================
+local function makeDraggable(dragObject, target)
+    local dragging, dragInput, dragStart, startPos
 
     dragObject.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
-            startPos = targetObject.Position
+            startPos = target.Position
 
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
             end)
         end
     end)
@@ -44,206 +40,217 @@ local function makeDraggable(dragObject, targetObject)
     UserInputService.InputChanged:Connect(function(input)
         if dragging and input == dragInput then
             local delta = input.Position - dragStart
-            targetObject.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            local newPos = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+            -- Batasi agar tidak keluar layar
+            newPos = UDim2.new(
+                math.clamp(newPos.X.Scale, 0, 1),
+                math.clamp(newPos.X.Offset, -target.AbsoluteSize.X/2, screenGui.AbsoluteSize.X - target.AbsoluteSize.X/2),
+                math.clamp(newPos.Y.Scale, 0, 1),
+                math.clamp(newPos.Y.Offset, -target.AbsoluteSize.Y/2, screenGui.AbsoluteSize.Y - target.AbsoluteSize.Y/2)
+            )
+            target.Position = newPos
         end
     end)
 end
 
--- ================== AMBIL CHAT TEXTBOX ROBLOX ==================
+-- ================== GET CHAT TEXTBOX (Support New & Old Chat) ==================
 local function getChatTextBox()
-    local chatGui = playerGui:FindFirstChild("Chat")
-    if not chatGui then return nil end
+    -- New TextChatService
+    local textChatService = game:GetService("TextChatService")
+    if textChatService and textChatService.ChatInputBarConfiguration then
+        local tb = textChatService.ChatInputBarConfiguration.TextBox
+        if tb then return tb end
+    end
 
-    for _, obj in ipairs(chatGui:GetDescendants()) do
-        if obj:IsA("TextBox") and obj.Visible and obj.TextEditable then
-            return obj
+    -- Old Legacy Chat
+    local chatGui = playerGui:FindFirstChild("Chat")
+    if chatGui then
+        for _, obj in ipairs(chatGui:GetDescendants()) do
+            if obj:IsA("TextBox") and obj.Visible and obj.TextEditable then
+                return obj
+            end
         end
     end
     return nil
 end
 
--- ================== BUBBLE (Minimized) ==================
+-- ================== BUBBLE ==================
 local bubble = Instance.new("Frame")
-bubble.Name = "Bubble"
-bubble.Size = UDim2.new(0, 80, 0, 80)
-bubble.Position = UDim2.new(1, -120, 1, -150)
-bubble.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+bubble.Size = UDim2.new(0, 85, 0, 85)
+bubble.Position = UDim2.new(1, -130, 0.7, 0)
+bubble.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
 bubble.BorderSizePixel = 0
 bubble.Parent = screenGui
 
-local bubbleCorner = Instance.new("UICorner")
-bubbleCorner.CornerRadius = UDim.new(1, 0)
-bubbleCorner.Parent = bubble
+Instance.new("UICorner", bubble).CornerRadius = UDim.new(1, 0)
 
-local bubbleLabel = Instance.new("TextLabel")
-bubbleLabel.Size = UDim2.new(1, 0, 1, 0)
-bubbleLabel.BackgroundTransparency = 1
-bubbleLabel.Text = "⌨️"
-bubbleLabel.TextColor3 = Color3.new(1, 1, 1)
-bubbleLabel.TextScaled = true
-bubbleLabel.Font = Enum.Font.GothamBold
-bubbleLabel.Parent = bubble
+local bubbleText = Instance.new("TextLabel")
+bubbleText.Size = UDim2.new(1,0,1,0)
+bubbleText.BackgroundTransparency = 1
+bubbleText.Text = "⌨️"
+bubbleText.TextColor3 = Color3.new(1,1,1)
+bubbleText.TextScaled = true
+bubbleText.Font = Enum.Font.GothamBold
+bubbleText.Parent = bubble
 
-makeDraggable(bubble, bubble)  -- bisa di-drag
+makeDraggable(bubble, bubble)
 
 -- ================== KEYBOARD FRAME ==================
 local keyboard = Instance.new("Frame")
-keyboard.Name = "Keyboard"
-keyboard.Size = UDim2.new(0.95, 0, 0.55, 0)
-keyboard.Position = UDim2.new(0.025, 0, 0.35, 0)
-keyboard.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-keyboard.BorderSizePixel = 0
+keyboard.Size = UDim2.new(0.96, 0, 0.58, 0)
+keyboard.Position = UDim2.new(0.02, 0, 0.35, 0)
+keyboard.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 keyboard.Visible = false
 keyboard.Parent = screenGui
 
-local kbCorner = Instance.new("UICorner")
-kbCorner.CornerRadius = UDim.new(0, 12)
-kbCorner.Parent = keyboard
+Instance.new("UICorner", keyboard).CornerRadius = UDim.new(0, 14)
 
--- Title Bar + Minimize Button
 local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 45)
-titleBar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-titleBar.BorderSizePixel = 0
+titleBar.Size = UDim2.new(1,0,0,50)
+titleBar.BackgroundColor3 = Color3.fromRGB(10,10,10)
 titleBar.Parent = keyboard
+Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 14)
 
-local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 12)
-titleCorner.Parent = titleBar
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1,-100,1,0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "External Keyboard"
+titleLabel.TextColor3 = Color3.new(1,1,1)
+titleLabel.TextScaled = true
+titleLabel.Font = Enum.Font.GothamSemibold
+titleLabel.Parent = titleBar
 
-local titleText = Instance.new("TextLabel")
-titleText.Size = UDim2.new(1, -90, 1, 0)
-titleText.BackgroundTransparency = 1
-titleText.Text = "External Keyboard"
-titleText.TextColor3 = Color3.new(1, 1, 1)
-titleText.TextScaled = true
-titleText.Font = Enum.Font.GothamSemibold
-titleText.Parent = titleBar
+local minBtn = Instance.new("TextButton")
+minBtn.Size = UDim2.new(0,50,0,50)
+minBtn.Position = UDim2.new(1,-50,0,0)
+minBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+minBtn.Text = "✕"
+minBtn.TextColor3 = Color3.new(1,1,1)
+minBtn.TextScaled = true
+minBtn.Parent = titleBar
+Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0,12)
 
-local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Size = UDim2.new(0, 45, 0, 45)
-minimizeBtn.Position = UDim2.new(1, -45, 0, 0)
-minimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-minimizeBtn.Text = "✕"
-minimizeBtn.TextColor3 = Color3.new(1, 1, 1)
-minimizeBtn.TextScaled = true
-minimizeBtn.Font = Enum.Font.GothamBold
-minimizeBtn.Parent = titleBar
+makeDraggable(titleBar, keyboard)
 
-makeDraggable(titleBar, keyboard)  -- drag dari title bar
-
--- ================== KEYBOARD BUTTONS ==================
+-- ================== KEY ROWS ==================
 local keysFrame = Instance.new("Frame")
-keysFrame.Size = UDim2.new(1, -20, 1, -55)
-keysFrame.Position = UDim2.new(0, 10, 0, 50)
+keysFrame.Size = UDim2.new(1,-20,1,-70)
+keysFrame.Position = UDim2.new(0,10,0,60)
 keysFrame.BackgroundTransparency = 1
 keysFrame.Parent = keyboard
 
-local mainList = Instance.new("UIListLayout")
-mainList.FillDirection = Enum.FillDirection.Vertical
-mainList.Padding = UDim.new(0, 8)
-mainList.Parent = keysFrame
-
-local keyRows = {
+local rows = {
     {"q","w","e","r","t","y","u","i","o","p"},
     {"a","s","d","f","g","h","j","k","l"},
-    {"z","x","c","v","b","n","m","Backspace"},
-    {"Shift", "Space", "Enter"}
+    {"z","x","c","v","b","n","m","⌫"},
+    {"Shift"," ","Enter"}
 }
 
-local isShifted = false
-local letterButtons = {}
+local isShift = false
+local letters = {}
 
-for rowIndex, row in ipairs(keyRows) do
-    local rowFrame = Instance.new("Frame")
-    rowFrame.Size = UDim2.new(1, 0, 0, 55)
-    rowFrame.BackgroundTransparency = 1
-    rowFrame.Parent = keysFrame
+for _, rowKeys in ipairs(rows) do
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1,0,0,58)
+    row.BackgroundTransparency = 1
+    row.Parent = keysFrame
 
-    local rowList = Instance.new("UIListLayout")
-    rowList.FillDirection = Enum.FillDirection.Horizontal
-    rowList.Padding = UDim.new(0, 6)
-    rowList.Parent = rowFrame
+    local list = Instance.new("UIListLayout")
+    list.FillDirection = Enum.FillDirection.Horizontal
+    list.Padding = UDim.new(0,5)
+    list.Parent = row
 
-    for _, keyText in ipairs(row) do
+    for _, k in ipairs(rowKeys) do
         local btn = Instance.new("TextButton")
-        btn.BackgroundColor3 = (keyText == "Backspace" or keyText == "Enter") and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(45, 45, 45)
-        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.BackgroundColor3 = (k == "⌫" or k == "Enter") and Color3.fromRGB(80,80,80) or Color3.fromRGB(40,40,40)
+        btn.TextColor3 = Color3.new(1,1,1)
         btn.TextScaled = true
         btn.Font = Enum.Font.GothamSemibold
-        btn.Parent = rowFrame
+        btn.Parent = row
 
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 8)
-        btnCorner.Parent = btn
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
 
-        if keyText == "Space" then
-            btn.Size = UDim2.new(0.45, 0, 1, 0)
-            btn.Text = " "
-        elseif keyText == "Backspace" then
-            btn.Size = UDim2.new(0.22, 0, 1, 0)
+        if k == " " then
+            btn.Size = UDim2.new(0.48,0,1,0)
+            btn.Text = "Space"
+        elseif k == "⌫" then
+            btn.Size = UDim2.new(0.18,0,1,0)
             btn.Text = "⌫"
-        elseif keyText == "Enter" then
-            btn.Size = UDim2.new(0.22, 0, 1, 0)
-            btn.Text = "⏎"
-        elseif keyText == "Shift" then
-            btn.Size = UDim2.new(0.15, 0, 1, 0)
+        elseif k == "Enter" then
+            btn.Size = UDim2.new(0.22,0,1,0)
+            btn.Text = "Enter"
+        elseif k == "Shift" then
+            btn.Size = UDim2.new(0.18,0,1,0)
             btn.Text = "⇧"
         else
-            btn.Size = UDim2.new(0.085, 0, 1, 0)
-            btn.Text = keyText
-            table.insert(letterButtons, btn)
+            btn.Size = UDim2.new(0.085,0,1,0)
+            btn.Text = k
+            table.insert(letters, btn)
         end
 
         btn.MouseButton1Click:Connect(function()
-            local chatBox = getChatTextBox()
-            if not chatBox then 
-                print("❌ Chatbox tidak ditemukan!") 
-                return 
+            local tb = getChatTextBox()
+            if not tb then
+                print("❌ Chatbox tidak ditemukan. Buka chat dulu!")
+                return
             end
 
-            chatBox:CaptureFocus()
+            tb.TextEditable = true
+            tb:CaptureFocus()
 
-            if keyText == "Backspace" then
-                chatBox.Text = chatBox.Text:sub(1, -2)
-            elseif keyText == "Enter" then
-                -- Enter hanya mengirim jika kamu tekan tombol enter di keyboard ini
-                chatBox.Text = chatBox.Text
-            elseif keyText == "Space" then
-                chatBox.Text = chatBox.Text .. " "
-            elseif keyText == "Shift" then
-                isShifted = not isShifted
-                for _, b in ipairs(letterButtons) do
-                    b.Text = isShifted and b.Text:upper() or b.Text:lower()
+            task.wait() -- penting untuk mobile
+
+            if k == "⌫" then
+                tb.Text = tb.Text:sub(1, -2)
+            elseif k == "Enter" then
+                -- Enter biasanya langsung kirim di Roblox
+            elseif k == " " then
+                tb.Text = tb.Text .. " "
+            elseif k == "Shift" then
+                isShift = not isShift
+                for _, b in ipairs(letters) do
+                    b.Text = isShift and b.Text:upper() or b.Text:lower()
                 end
             else
-                local char = isShifted and keyText:upper() or keyText
-                chatBox.Text = chatBox.Text .. char
+                local char = isShift and k:upper() or k
+                tb.Text = tb.Text .. char
             end
 
-            chatBox.CursorPosition = #chatBox.Text + 1
+            tb.CursorPosition = #tb.Text + 1
         end)
     end
 end
 
--- ================== TOGGLE BUBBLE & KEYBOARD ==================
-local function toggleKeyboard(show)
+-- ================== TOGGLE ==================
+local function showKeyboard(show)
     keyboard.Visible = show
     bubble.Visible = not show
 end
 
-bubble.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        toggleKeyboard(true)
+bubble.InputBegan:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseButton1 then
+        showKeyboard(true)
     end
 end)
 
-minimizeBtn.MouseButton1Click:Connect(function()
-    toggleKeyboard(false)
+minBtn.MouseButton1Click:Connect(function()
+    showKeyboard(false)
 end)
 
--- Mulai dengan Bubble
-bubble.Visible = true
-keyboard.Visible = false
+-- Auto prevent default keyboard when clicking chat
+game:GetService("RunService").RenderStepped:Connect(function()
+    local tb = getChatTextBox()
+    if tb and tb:IsFocused() then
+        -- Release focus sebentar agar keyboard bawaan HP tidak muncul
+        tb:ReleaseFocus()
+        task.wait(0.05)
+        tb:CaptureFocus()
+    end
+end)
 
-print("✅ External Keyboard Mobile berhasil dimuat! Klik bubble untuk mulai ketik.")
+print("✅ External Keyboard Mobile FIXED berhasil dimuat!")
+print("   Bubble bisa digeser bebas. Klik bubble untuk buka keyboard.")
+]])()
