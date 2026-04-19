@@ -1,4 +1,4 @@
--- KEYBOARD FINAL QWERTY + SIZE RAPI
+-- KEYBOARD FINAL QWERTY BENERAN (OFFSET FIX)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -110,16 +110,19 @@ local function sendMessage(msg)
     end
 end
 
--- ROW
-local function createRow(y)
+-- ROW (FIX QWERTY OFFSET)
+local function createRow(y, padLeft)
     local row = Instance.new("Frame", keyboard)
     row.Size = UDim2.new(1,0,0.2,0)
     row.Position = UDim2.new(0,0,y,0)
 
     local layout = Instance.new("UIListLayout", row)
     layout.FillDirection = Enum.FillDirection.Horizontal
-    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    layout.Padding = UDim.new(0,3)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    layout.Padding = UDim.new(0,4)
+
+    local pad = Instance.new("UIPadding", row)
+    pad.PaddingLeft = UDim.new(0, padLeft or 0)
 
     return row
 end
@@ -141,14 +144,14 @@ local function createKey(parent, text, width, func, saveLetter, saveNumber)
     btn.MouseButton1Click:Connect(func)
 end
 
--- ROWS
-local row1 = createRow(0)
-local row2 = createRow(0.2)
-local row3 = createRow(0.4)
-local row4 = createRow(0.6)
-local row5 = createRow(0.8)
+-- ROWS (OFFSET BIAR QWERTY)
+local row1 = createRow(0, 0)
+local row2 = createRow(0.2, 10)
+local row3 = createRow(0.4, 25)
+local row4 = createRow(0.6, 40)
+local row5 = createRow(0.8, 10)
 
--- ANGKA
+-- ANGKA + DEL
 local nums = {"1","2","3","4","5","6","7","8","9","0"}
 for i,v in ipairs(nums) do
     createKey(row1, v, 0.07, function()
