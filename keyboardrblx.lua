@@ -1,4 +1,4 @@
--- KEYBOARD ROBLOX (DRAGGABLE + COMPACT + CENTER)
+-- KEYBOARD ROBLOX (DRAGGABLE + COMPACT + TIDAK TABRAKAN)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -68,13 +68,14 @@ keyboardArea.Size = UDim2.new(1, 0, 1, -40)
 keyboardArea.Position = UDim2.new(0, 0, 0, 40)
 keyboardArea.BackgroundTransparency = 1
 
--- ============ BARIS 1 (ANGKA) ============
-local row1 = Instance.new("Frame", keyboardArea)
-row1.Size = UDim2.new(1, -20, 0, 40)
-row1.Position = UDim2.new(0, 10, 0, 5)
-row1.BackgroundTransparency = 1
-
 local function createRowButtons(parent, buttons, onClick, bgColor)
+    -- Hapus semua tombol lama di parent terlebih dahulu
+    for _, child in ipairs(parent:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+    
     local btnWidth = (parent.AbsoluteSize.X - (#buttons - 1) * 4) / #buttons
     for i, btnText in ipairs(buttons) do
         local btn = Instance.new("TextButton", parent)
@@ -91,9 +92,10 @@ local function createRowButtons(parent, buttons, onClick, bgColor)
     end
 end
 
-local function clearRow(row)
-    for _, child in ipairs(row:GetChildren()) do
-        if child:IsA("TextButton") then
+local function clearAllRows()
+    -- Hapus SEMUA row frame di keyboardArea
+    for _, child in ipairs(keyboardArea:GetChildren()) do
+        if child:IsA("Frame") then
             child:Destroy()
         end
     end
@@ -161,36 +163,32 @@ local simbol3 = {";", ":", "'", '"', ",", ".", "<", ">", "/", "?"}
 local simbol4 = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
 
 local function refreshKeyboard()
-    clearRow(row1)
-    
-    for i = 2, 5 do
-        local row = keyboardArea:FindFirstChild("row"..i)
-        if row then
-            clearRow(row)
-        end
-    end
+    -- HAPUS SEMUA ROW LAMA (biar tidak tabrakan)
+    clearAllRows()
     
     if symbolMode then
+        -- MODE SIMBOL
+        local row1 = Instance.new("Frame", keyboardArea)
+        row1.Size = UDim2.new(1, -20, 0, 40)
+        row1.Position = UDim2.new(0, 10, 0, 5)
+        row1.BackgroundTransparency = 1
+        
         local row2 = Instance.new("Frame", keyboardArea)
-        row2.Name = "row2"
         row2.Size = UDim2.new(1, -20, 0, 40)
         row2.Position = UDim2.new(0, 10, 0, 50)
         row2.BackgroundTransparency = 1
         
         local row3 = Instance.new("Frame", keyboardArea)
-        row3.Name = "row3"
         row3.Size = UDim2.new(1, -20, 0, 40)
         row3.Position = UDim2.new(0, 10, 0, 95)
         row3.BackgroundTransparency = 1
         
         local row4 = Instance.new("Frame", keyboardArea)
-        row4.Name = "row4"
         row4.Size = UDim2.new(1, -20, 0, 40)
         row4.Position = UDim2.new(0, 10, 0, 140)
         row4.BackgroundTransparency = 1
         
         local row5 = Instance.new("Frame", keyboardArea)
-        row5.Name = "row5"
         row5.Size = UDim2.new(1, -20, 0, 40)
         row5.Position = UDim2.new(0, 10, 0, 185)
         row5.BackgroundTransparency = 1
@@ -218,32 +216,36 @@ local function refreshKeyboard()
         end, Color3.fromRGB(80, 80, 80))
         
     else
+        -- MODE HURUF (QWERTY)
+        local row1 = Instance.new("Frame", keyboardArea)
+        row1.Size = UDim2.new(1, -20, 0, 40)
+        row1.Position = UDim2.new(0, 10, 0, 5)
+        row1.BackgroundTransparency = 1
+        
         local row2 = Instance.new("Frame", keyboardArea)
-        row2.Name = "row2"
         row2.Size = UDim2.new(1, -20, 0, 40)
         row2.Position = UDim2.new(0, 10, 0, 50)
         row2.BackgroundTransparency = 1
         
         local row3 = Instance.new("Frame", keyboardArea)
-        row3.Name = "row3"
         row3.Size = UDim2.new(0.85, -20, 0, 40)
         row3.Position = UDim2.new(0.075, 10, 0, 95)
         row3.BackgroundTransparency = 1
         
         local row4 = Instance.new("Frame", keyboardArea)
-        row4.Name = "row4"
         row4.Size = UDim2.new(0.7, -20, 0, 40)
         row4.Position = UDim2.new(0.15, 10, 0, 140)
         row4.BackgroundTransparency = 1
         
         local row5 = Instance.new("Frame", keyboardArea)
-        row5.Name = "row5"
         row5.Size = UDim2.new(1, -20, 0, 40)
         row5.Position = UDim2.new(0, 10, 0, 185)
         row5.BackgroundTransparency = 1
         
+        -- Angka
         createRowButtons(row1, angka, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(60, 60, 80))
         
+        -- Huruf baris 2
         if capsLock then
             createRowButtons(row2, huruf2, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         else
@@ -251,6 +253,7 @@ local function refreshKeyboard()
             createRowButtons(row2, lower, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         end
         
+        -- Huruf baris 3
         if capsLock then
             createRowButtons(row3, huruf3, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         else
@@ -258,6 +261,7 @@ local function refreshKeyboard()
             createRowButtons(row3, lower, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         end
         
+        -- Huruf baris 4
         if capsLock then
             createRowButtons(row4, huruf4, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         else
@@ -265,6 +269,7 @@ local function refreshKeyboard()
             createRowButtons(row4, lower, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
         end
         
+        -- Tombol bawah
         local bawah = {"CAPS", "?!#", "SPACE", "⌫", "CLEAR"}
         createRowButtons(row5, bawah, function(t)
             if t == "CAPS" then
@@ -294,7 +299,7 @@ local function refreshKeyboard()
     end
 end
 
--- FLOATING BUBBLE (BISA DI DRAG JUGA)
+-- FLOATING BUBBLE
 local bubble = Instance.new("TextButton", gui)
 bubble.Size = UDim2.new(0, 45, 0, 45)
 bubble.Position = UDim2.new(0, 10, 0.65, 0)
