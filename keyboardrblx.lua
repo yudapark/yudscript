@@ -94,7 +94,10 @@ bubble.Position = UDim2.new(0.85, 0, 0.6, 0)
 bubble.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
 bubble.BorderSizePixel = 0
 bubble.ImageTransparency = 1
+bubble.ZIndex = 3000
 bubble.Parent = screenGui
+
+print("🟢 Bubble created - ZIndex:", bubble.ZIndex)
 
 local bubbleCorner = Instance.new("UICorner")
 bubbleCorner.CornerRadius = UDim.new(1, 0)
@@ -322,9 +325,30 @@ end
 
 -- ================== TOGGLE ==================
 bubble.MouseButton1Click:Connect(function()
+    print("🟢 Bubble MouseButton1Click fired!")
+    showCustomKeyboard()
+end)
+
+bubble.Activated:Connect(function()
+    print("🟢 Bubble Activated fired!")
+    showCustomKeyboard()
+end)
+
+-- TouchTap for mobile reliability
+bubble.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        print("🟢 Bubble Touch detected!")
+        showCustomKeyboard()
+    end
+end)
+
+local function showCustomKeyboard()
     customKeyboardActive = true
     keyboard.Visible = true
     bubble.Visible = false
+    keyboard.ZIndex = 2500
+    
+    print("✅ Custom keyboard shown!")
     
     -- Mobile: Show backdrop and disable native keyboard
     if isMobile then
@@ -333,9 +357,11 @@ bubble.MouseButton1Click:Connect(function()
         if tb then
             chatTextBoxActive = tb.Active
             tb.Active = false
+            tb.TextEditable = true
         end
+        print("📱 Mobile backdrop activated")
     end
-end)
+end
 
 closeBtn.MouseButton1Click:Connect(function()
     customKeyboardActive = false
