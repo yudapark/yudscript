@@ -1,4 +1,4 @@
--- KEYBOARD ROBLOX (DRAGGABLE + COMPACT + TIDAK TABRAKAN)
+-- KEYBOARD ROBLOX (DRAGGABLE + COMPACT + BACKGROUND HITAM)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -14,21 +14,21 @@ gui.ResetOnSpawn = false
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 500, 0, 280)
 main.Position = UDim2.new(0.5, -250, 0.5, -140)
-main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+main.BackgroundColor3 = Color3.fromRGB(18, 18, 18)  -- HITAM
 main.BorderSizePixel = 0
 main.ClipsDescendants = true
 
 -- TOP BAR (SEBAGAI AREA DRAG)
 local topBar = Instance.new("Frame", main)
 topBar.Size = UDim2.new(1, 0, 0, 40)
-topBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+topBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  -- HITAM GELAP
 topBar.BorderSizePixel = 0
 
 -- INPUT TEXT
 local textBox = Instance.new("TextLabel", topBar)
 textBox.Size = UDim2.new(0, 250, 0, 30)
 textBox.Position = UDim2.new(0, 10, 0, 5)
-textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+textBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 textBox.TextColor3 = Color3.new(1, 1, 1)
 textBox.Text = ""
 textBox.Font = Enum.Font.Gotham
@@ -68,7 +68,7 @@ keyboardArea.Size = UDim2.new(1, 0, 1, -40)
 keyboardArea.Position = UDim2.new(0, 0, 0, 40)
 keyboardArea.BackgroundTransparency = 1
 
-local function createRowButtons(parent, buttons, onClick, bgColor)
+local function createRowButtons(parent, buttons, onClick)
     -- Hapus semua tombol lama di parent terlebih dahulu
     for _, child in ipairs(parent:GetChildren()) do
         if child:IsA("TextButton") then
@@ -82,7 +82,7 @@ local function createRowButtons(parent, buttons, onClick, bgColor)
         btn.Size = UDim2.new(0, btnWidth, 1, 0)
         btn.Position = UDim2.new(0, (btnWidth + 4) * (i-1), 0, 0)
         btn.Text = btnText
-        btn.BackgroundColor3 = bgColor or Color3.fromRGB(55, 55, 55)
+        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)  -- SEMUA TOMBOL BACKGROUND SAMA
         btn.TextColor3 = Color3.new(1, 1, 1)
         btn.TextSize = 18
         btn.BorderSizePixel = 0
@@ -167,7 +167,7 @@ local function refreshKeyboard()
     clearAllRows()
     
     if symbolMode then
-        -- MODE SIMBOL
+        -- ============ MODE SIMBOL (BACKGROUND HITAM) ============
         local row1 = Instance.new("Frame", keyboardArea)
         row1.Size = UDim2.new(1, -20, 0, 40)
         row1.Position = UDim2.new(0, 10, 0, 5)
@@ -193,10 +193,10 @@ local function refreshKeyboard()
         row5.Position = UDim2.new(0, 10, 0, 185)
         row5.BackgroundTransparency = 1
         
-        createRowButtons(row1, simbol1, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(70, 70, 70))
-        createRowButtons(row2, simbol2, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(70, 70, 70))
-        createRowButtons(row3, simbol3, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(70, 70, 70))
-        createRowButtons(row4, simbol4, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(60, 60, 80))
+        createRowButtons(row1, simbol1, function(t) currentText = currentText .. t updateText() end)
+        createRowButtons(row2, simbol2, function(t) currentText = currentText .. t updateText() end)
+        createRowButtons(row3, simbol3, function(t) currentText = currentText .. t updateText() end)
+        createRowButtons(row4, simbol4, function(t) currentText = currentText .. t updateText() end)
         
         local bawah = {"ABC", "SPACE", "⌫", "CLEAR"}
         createRowButtons(row5, bawah, function(t)
@@ -213,10 +213,10 @@ local function refreshKeyboard()
                 currentText = ""
                 updateText()
             end
-        end, Color3.fromRGB(80, 80, 80))
+        end)
         
     else
-        -- MODE HURUF (QWERTY)
+        -- ============ MODE HURUF (BACKGROUND HITAM JUGA) ============
         local row1 = Instance.new("Frame", keyboardArea)
         row1.Size = UDim2.new(1, -20, 0, 40)
         row1.Position = UDim2.new(0, 10, 0, 5)
@@ -243,30 +243,30 @@ local function refreshKeyboard()
         row5.BackgroundTransparency = 1
         
         -- Angka
-        createRowButtons(row1, angka, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(60, 60, 80))
+        createRowButtons(row1, angka, function(t) currentText = currentText .. t updateText() end)
         
         -- Huruf baris 2
         if capsLock then
-            createRowButtons(row2, huruf2, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
+            createRowButtons(row2, huruf2, function(t) currentText = currentText .. t updateText() end)
         else
             local lower = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p"}
-            createRowButtons(row2, lower, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
+            createRowButtons(row2, lower, function(t) currentText = currentText .. t updateText() end)
         end
         
         -- Huruf baris 3
         if capsLock then
-            createRowButtons(row3, huruf3, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
+            createRowButtons(row3, huruf3, function(t) currentText = currentText .. t updateText() end)
         else
             local lower = {"a", "s", "d", "f", "g", "h", "j", "k", "l"}
-            createRowButtons(row3, lower, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
+            createRowButtons(row3, lower, function(t) currentText = currentText .. t updateText() end)
         end
         
         -- Huruf baris 4
         if capsLock then
-            createRowButtons(row4, huruf4, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
+            createRowButtons(row4, huruf4, function(t) currentText = currentText .. t updateText() end)
         else
             local lower = {"z", "x", "c", "v", "b", "n", "m"}
-            createRowButtons(row4, lower, function(t) currentText = currentText .. t updateText() end, Color3.fromRGB(55, 55, 55))
+            createRowButtons(row4, lower, function(t) currentText = currentText .. t updateText() end)
         end
         
         -- Tombol bawah
@@ -295,7 +295,7 @@ local function refreshKeyboard()
                 currentText = ""
                 updateText()
             end
-        end, Color3.fromRGB(80, 80, 80))
+        end)
     end
 end
 
