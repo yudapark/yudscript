@@ -1,5 +1,3 @@
--- KEYBOARD ROBLOX FINAL GOD MODE (ALL-IN-ONE)
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local TextChatService = game:GetService("TextChatService")
